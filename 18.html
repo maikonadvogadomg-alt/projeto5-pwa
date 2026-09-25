@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Logs GitHub Actions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group textarea,
+        .input-group input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .input-group textarea:focus,
+        .input-group input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .output-section {
+            grid-column: 1 / -1;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #e9ecef;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .log-display {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 500px;
+            overflow-y: auto;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error {
+            color: #f48771;
+            background: rgba(244, 135, 113, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .warning {
+            color: #dcdcaa;
+            background: rgba(220, 220, 170, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .success {
+            color: #6a9955;
+            background: rgba(106, 153, 85, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .info {
+            color: #569cd6;
+            background: rgba(86, 156, 214, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .comparison-table .changed {
+            background: #fff3cd;
+        }
+
+        .comparison-table .removed {
+            background: #f8d7da;
+        }
+
+        .comparison-table .added {
+            background: #d4edda;
+        }
+
+        .memory-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .memory-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .memory-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+        }
+
+        .memory-item.error-item {
+            border-left-color: #dc3545;
+        }
+
+        .memory-item.warning-item {
+            border-left-color: #ffc107;
+        }
+
+        .memory-item.success-item {
+            border-left-color: #28a745;
+        }
+
+        .memory-item-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .memory-item-date {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .memory-item-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .analysis-box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .analysis-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .analysis-box ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .analysis-box li {
+            margin-bottom: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .download-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #0c5460;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #721c24;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Analisador de Logs GitHub Actions</h1>
+            <p>Tradução, análise e comparação de logs em português</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Seção de Entrada -->
+            <div class="section">
+                <h2>📥 Entrada de Dados</h2>
+                
+                <div class="input-group">
+                    <label for="logInput">Cole o log do GitHub Actions:</label>
+                    <textarea id="logInput" placeholder="Cole aqui o conteúdo do log..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="fileInput">Ou importe um arquivo ZIP:</label>
+                    <input type="file" id="fileInput" accept=".zip,.txt,.log">
+                </div>
+
+                <button onclick="analisarLog()">🚀 Analisar Log</button>
+                <button class="btn-secondary" onclick="limparTudo()">🗑️ Limpar Tudo</button>
+            </div>
+
+            <!-- Seção de Memória -->
+            <div class="section">
+                <h2>💾 Memória Local</h2>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                    Histórico de análises salvas localmente
+                </p>
+                <ul class="memory-list" id="memoryList">
+                    <li style="color: #999; text-align: center; padding: 20px;">
+                        Nenhuma análise salva ainda
+                    </li>
+                </ul>
+                <button class="btn-danger" onclick="limparMemoria()" style="margin-top: 15px; width: 100%;">
+                    🗑️ Limpar Memória
+                </button>
+            </div>
+
+            <!-- Seção de Saída -->
+            <div class="section output-section">
+                <h2>📊 Análise e Resultados</h2>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="mudarAba('traducao')">📝 Tradução</button>
+                    <button class="tab-btn" onclick="mudarAba('analise')">🔎 Análise</button>
+                    <button class="tab-btn" onclick="mudarAba('comparacao')">📈 Comparação</button>
+                    <button class="tab-btn" onclick="mudarAba('relatorio')">📄 Relatório</button>
+                </div>
+
+                <!-- Aba Tradução -->
+                <div id="traducao" class="tab-content active">
+                    <div class="log-display scrollbar" id="traducaoOutput">
+                        Aguardando análise...
+                    </div>
+                </div>
+
+                <!-- Aba Análise -->
+                <div id="analise" class="tab-content">
+                    <div class="stats" id="statsContainer"></div>
+                    <div id="analiseOutput"></div>
+                </div>
+
+                <!-- Aba Comparação -->
+                <div id="comparacao" class="tab-content">
+                    <div id="comparacaoOutput">
+                        <p style="color: #999; text-align: center; padding: 40px;">
+                            Execute pelo menos 2 análises para ver a comparação
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Aba Relatório -->
+                <div id="relatorio" class="tab-content">
+                    <div id="relatorioOutput">
+                        <p style="color: #999; text-align: center; padding: 40px;">
+                            Nenhum relatório gerado ainda
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Seção de Download -->
+                <div class="download-section">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📥 Baixar Relatório</h3>
+                    <button class="btn-success" onclick="baixarRelatorioJSON()">
+                        📋 Baixar JSON
+                    </button>
+                    <button class="btn-success" onclick="baixarRelatorioPDF()">
+                        📄 Baixar PDF
+                    </button>
+                    <button class="btn-success" onclick="baixarRelatorioCSV()">
+                        📊 Baixar CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let estadoAtual = {
+            logAtual: '',
+            analiseAtual: null,
+            historico: [],
+            memoria: []
+        };
+
+        // Carregar memória ao iniciar
+        window.addEventListener('load', () => {
+            carregarMemoria();
+        });
+
+        // Função para carregar memória do localStorage
+        function carregarMemoria() {
+            const memoriaArmazenada = localStorage.getItem('analises_github_actions');
+            if (memoriaArmazenada) {
+                estadoAtual.memoria = JSON.parse(memoriaArmazenada);
+                atualizarListaMemoria();
+            }
+        }
+
+        // Função para salvar na memória
+        function salvarNaMemoria(analise) {
+            const item = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('pt-BR'),
+                titulo: analise.titulo || 'Análise sem título',
+                status: analise.status,
+                erros: analise.erros.length,
+                avisos: analise.avisos.length,
+                dados: analise
+            };
+
+            estadoAtual.memoria.unshift(item);
+            
+            // Manter apenas as últimas 50 análises
+            if (estadoAtual.memoria.length > 50) {
+                estadoAtual.memoria = estadoAtual.memoria.slice(0, 50);
+            }
+
+            localStorage.setItem('analises_github_actions', JSON.stringify(estadoAtual.memoria));
+            atualizarListaMemoria();
+        }
+
+        // Atualizar lista de memória
+        function atualizarListaMemoria() {
+            const memoryList = document.getElementById('memoryList');
+            
+            if (estadoAtual.memoria.length === 0) {
+                memoryList.innerHTML = '<li style="color: #999; text-align: center; padding: 20px;">Nenhuma análise salva ainda</li>';
+                return;
+            }
+
+            memoryList.innerHTML = estadoAtual.memoria.map((item, index) => `
+                <li class="memory-item ${item.status.toLowerCase()}-item" onclick="carregarDaMemoria(${index})">
+                    <div class="memory-item-title">${item.titulo}</div>
+                    <div class="memory-item-date">${item.timestamp}</div>
+                    <span class="memory-item-status status-${item.status.toLowerCase()}">
+                        ${item.status} • ${item.erros} erros • ${item.avisos} avisos
+                    </span>
+                </li>
+            `).join('');
+        }
+
+        // Carregar análise da memória
+        function carregarDaMemoria(index) {
+            const item = estadoAtual.memoria[index];
+            estadoAtual.analiseAtual = item.dados;
+            exibirResultados(item.dados);
+            mudarAba('analise');
+        }
+
+        // Limpar memória
+        function limparMemoria() {
+            if (confirm('Tem certeza que deseja limpar toda a memória? Esta ação não pode ser desfeita.')) {
+                estadoAtual.memoria = [];
+                localStorage.removeItem('analises_github_actions');
+                atualizarListaMemoria();
+                alert('Memória limpa com sucesso!');
+            }
+        }
+
+        // Analisar log
+        async function analisarLog() {
+            let logText = document.getElementById('logInput').value.trim();
+
+            if (!logText) {
+                alert('Por favor, cole um log ou selecione um arquivo!');
+                return;
+            }
+
+            estadoAtual.logAtual = logText;
+            const analise = analisarTexto(logText);
+            estadoAtual.analiseAtual = analise;
+
+            salvarNaMemoria(analise);
+            exibirResultados(analise);
+            mudarAba('analise');
+        }
+
+        // Processar arquivo
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                document.getElementById('logInput').value = text;
+                alert('Arquivo carregado com sucesso!');
+            } catch (error) {
+                alert('Erro ao ler arquivo: ' + error.message);
+            }
+        });
+
+        // Função principal de análise
+        function analisarTexto(texto) {
+            const linhas = texto.split('\n');
+            const analise = {
+                titulo: extrairTitulo(texto),
+                status: 'SUCESSO',
+                erros: [],
+                avisos: [],
+                informacoes: [],
+                sucessos: [],
+                traducao: [],
+                estatisticas: {
+                    totalLinhas: linhas.length,
+                    errosEncontrados: 0,
+                    avisos: 0,
+                    sucessos: 0
+                }
+            };
+
+            // Dicionário de tradução
+            const dicionario = {
+                'error': 'ERRO',
+                'Error': 'Erro',
+                'ERROR': 'ERRO',
+                'warning': 'AVISO',
+                'Warning': 'Aviso',
+                'WARNING': 'AVISO',
+                'failed': 'falhou',
+                'Failed': 'Falhou',
+                'FAILED': 'FALHOU',
+                'success': 'sucesso',
+                'Success': 'Sucesso',
+                'SUCCESS': 'SUCESSO',
+                'passed': 'passou',
+                'Passed': 'Passou',
+                'PASSED': 'PASSOU',
+                'timeout': 'tempo esgotado',
+                'Timeout': 'Tempo esgotado',
+                'TIMEOUT': 'TEMPO ESGOTADO',
+                'fatal': 'fatal',
+                'Fatal': 'Fatal',
+                'FATAL': 'FATAL',
+                'exception': 'exceção',
+                'Exception': 'Exceção',
+                'EXCEPTION': 'EXCEÇÃO',
+                'undefined': 'indefinido',
+                'Undefined': 'Indefinido',
+                'UNDEFINED': 'INDEFINIDO',
+                'null': 'nulo',
+                'Null': 'Nulo',
+                'NULL': 'NULO',
+                'running': 'executando',
+                'Running': 'Executando',
+                'RUNNING': 'EXECUTANDO',
+                'completed': 'concluído',
+                'Completed': 'Concluído',
+                'COMPLETED': 'CONCLUÍDO',
+                'started': 'iniciado',
+                'Started': 'Iniciado',
+                'STARTED': 'INICIADO',
+                'skipped': 'pulado',
+                'Skipped': 'Pulado',
+                'SKIPPED': 'PULADO',
+                'cancelled': 'cancelado',
+                'Cancelled': 'Cancelado',
+                'CANCELLED': 'CANCELADO',
+                'retry': 'tentar novamente',
+                'Retry': 'Tentar novamente',
+                'RETRY': 'TENTAR NOVAMENTE',
+                'timeout exceeded': 'tempo limite excedido',
+                'Connection refused': 'Conexão recusada',
+                'Permission denied': 'Permissão negada',
+                'File not found': 'Arquivo não encontrado',
+                'Invalid argument': 'Argumento inválido',
+                'Out of memory': 'Sem memória',
+                'Disk full': 'Disco cheio',
+                'Network error': 'Erro de rede',
+                'Authentication failed': 'Falha na autenticação',
+                'Authorization failed': 'Falha na autorização',
+                'Access denied': 'Acesso negado',
+                'Resource not available': 'Recurso não disponível',
+                'Service unavailable': 'Serviço indisponível'
+            };
+
+            linhas.forEach((linha, index) => {
+                let linhaProcessada = linha;
+                let tipo = 'info';
+
+                // Detectar tipo de linha
+                if (linha.toLowerCase().includes('error') || linha.toLowerCase().includes('erro')) {
+                    tipo = 'error';
+                    analise.estatisticas.errosEncontrados++;
+                    analise.status = 'ERRO';
+                } else if (linha.toLowerCase().includes('warning') || linha.toLowerCase().includes('aviso')) {
+                    tipo = 'warning';
+                    analise.estatisticas.avisos++;
+                } else if (linha.toLowerCase().includes('success') || linha.toLowerCase().includes('sucesso') || 
+                           linha.toLowerCase().includes('passed') || linha.toLowerCase().includes('passou')) {
+                    tipo = 'success';
+                    analise.estatisticas.sucessos++;
+                }
+
+                // Traduzir linha
+                let linhaTraducida = linha;
+                Object.keys(dicionario).forEach(chave => {
+                    const regex = new RegExp(`\\b${chave}\\b`, 'gi');
+                    linhaTraducida = linhaTraducida.replace(regex, dicionario[chave]);
+                });
+
+                // Armazenar resultado
+                analise.traducao.push({
+                    original: linha,
+                    traduzida: linhaTraducida,
+                    tipo: tipo
+                });
+
+                // Categorizar
+                if (tipo === 'error') {
+                    analise.erros.push({
+                        linha: index + 1,
+                        original: linha,
+                        traduzida: linhaTraducida
+                    });
+                } else if (tipo === 'warning') {
+                    analise.avisos.push({
+                        linha: index + 1,
+                        original: linha,
+                        traduzida: linhaTraducida
+                    });
+                } else if (tipo === 'success') {
+                    analise.sucessos.push({
+                        linha: index + 1,
+                        original: linha,
+                        traduzida: linhaTraducida
+                    });
+                } else {
+                    analise.informacoes.push({
+                        linha: index + 1,
+                        original: linha,
+                        traduzida: linhaTraducida
+                    });
+                }
+            });
+
+            // Análise de problemas comuns
+            analise.problemasComuns = detectarProblemasComuns(texto);
+
+            return analise;
+        }
+
+        // Extrair título do log
+        function extrairTitulo(texto) {
+            const primeiraLinha = texto.split('\n')[0];
+            if (primeiraLinha.length > 50) {
+                return primeiraLinha.substring(0, 50) + '...';
+            }
+            return primeiraLinha || 'Análise de Log';
+        }
+
+        // Detectar problemas comuns
+        function detectarProblemasComuns(texto) {
+            const problemas = [];
+            const textoLower = texto.toLowerCase();
+
+            const padroes = [
+                { regex: /timeout|timed out/i, problema: '⏱️ Timeout detectado - Processo levou muito tempo', solucao: 'Aumentar tempo limite ou otimizar código' },
+                { regex: /connection refused|conexão recusada/i, problema: '🔌 Conexão recusada - Servidor não respondeu', solucao: 'Verificar se servidor está rodando e acessível' },
+                { regex: /permission denied|permissão negada/i, problema: '🔐 Permissão negada - Sem acesso ao recurso', solucao: 'Verificar permissões de arquivo/pasta' },
+                { regex: /file not found|arquivo não encontrado/i, problema: '📁 Arquivo não encontrado', solucao: 'Verificar caminho do arquivo' },
+                { regex: /out of memory|sem memória/i, problema: '💾 Memória insuficiente', solucao: 'Aumentar limite de memória ou otimizar código' },
+                { regex: /null|undefined|nulo|indefinido/i, problema: '❌ Referência nula/indefinida', solucao: 'Adicionar verificações de null antes de usar variáveis' },
+                { regex: /authentication failed|falha na autenticação/i, problema: '🔑 Falha na autenticação', solucao: 'Verificar credenciais e tokens' },
+                { regex: /network error|erro de rede/i, problema: '🌐 Erro de rede', solucao: 'Verificar conexão de internet' },
+                { regex: /disk full|disco cheio/i, problema: '💿 Disco cheio', solucao: 'Liberar espaço em disco' },
+                { regex: /service unavailable|serviço indisponível/i, problema: '⚠️ Serviço indisponível', solucao: 'Aguardar serviço voltar ao normal' }
+            ];
+
+            padroes.forEach(padrao => {
+                if (padrao.regex.test(texto)) {
+                    problemas.push({
+                        problema: padrao.problema,
+                        solucao: padrao.solucao
+                    });
+                }
+            });
+
+            return problemas;
+        }
+
+        // Exibir resultados
+        function exibirResultados(analise) {
+            // Aba Tradução
+            let traducaoHTML = '';
+            analise.traducao.forEach(item => {
+                let classe = '';
+                if (item.tipo === 'error') classe = 'error';
+                else if (item.tipo === 'warning') classe = 'warning';
+                else if (item.tipo === 'success') classe = 'success';
+                else classe = 'info';
+
+                traducaoHTML += `<div class="${classe}">${item.traduzida}</div>\n`;
+            });
+            document.getElementById('traducaoOutput').textContent = traducaoHTML || 'Nenhuma tradução disponível';
+
+            // Aba Análise
+            let analiseHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="number">${analise.estatisticas.totalLinhas}</div>
+                        <div class="label">Total de Linhas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number" style="color: #dc3545;">${analise.estatisticas.errosEncontrados}</div>
+                        <div class="label">Erros</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number" style="color: #ffc107;">${analise.estatisticas.avisos}</div>
+                        <div class="label">Avisos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number" style="color: #28a745;">${analise.estatisticas.sucessos}</div>
+                        <div class="label">Sucessos</div>
+                    </div>
+                </div>
+            `;
+
+            if (analise.erros.length > 0) {
+                analiseHTML += `
+                    <div class="analysis-box">
+                        <h3>❌ Erros Encontrados (${analise.erros.length})</h3>
+                        <ul>
+                            ${analise.erros.map(e => `
+                                <li><strong>Linha ${e.linha}:</strong> ${e.traduzida}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (analise.avisos.length > 0) {
+                analiseHTML += `
+                    <div class="analysis-box" style="border-left-color: #ffc107;">
+                        <h3 style="color: #ffc107;">⚠️ Avisos (${analise.avisos.length})</h3>
+                        <ul>
+                            ${analise.avisos.map(a => `
+                                <li><strong>Linha ${a.linha}:</strong> ${a.traduzida}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (analise.problemasComuns.length > 0) {
+                analiseHTML += `
+                    <div class="analysis-box" style="border-left-color: #ff6b6b;">
+                        <h3 style="color: #ff6b6b;">🔍 Problemas Comuns Detectados</h3>
+                        <ul>
+                            ${analise.problemasComuns.map(p => `
+                                <li>
+                                    <strong>${p.problema}</strong><br>
+                                    <em style="color: #666;">Solução: ${p.solucao}</em>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            document.getElementById('analiseOutput').innerHTML = analiseHTML;
+
+            // Aba Comparação
+            if (estadoAtual.historico.length > 0) {
+                let comparacaoHTML = '<table class="comparison-table"><thead><tr><th>Métrica</th><th>Análise Anterior</th><th>Análise Atual</th><th>Mudança</th></tr></thead><tbody>';
+                
+                const anterior = estadoAtual.historico[estadoAtual.historico.length - 1];
+                
+                const mudancaErros = analise.estatisticas.errosEncontrados - anterior.estatisticas.errosEncontrados;
+                const mudancaAvisos = analise.estatisticas.avisos - anterior.estatisticas.avisos;
+                
+                comparacaoHTML += `
+                    <tr class="${mudancaErros !== 0 ? 'changed' : ''}">
+                        <td>Erros</td>
+                        <td>${anterior.estatisticas.errosEncontrados}</td>
+                        <td>${analise.estatisticas.errosEncontrados}</td>
+                        <td>${mudancaErros > 0 ? '📈 +' + mudancaErros : mudancaErros < 0 ? '📉 ' + mudancaErros : '→ Sem mudança'}</td>
+                    </tr>
+                    <tr class="${mudancaAvisos !== 0 ? 'changed' : ''}">
+                        <td>Avisos</td>
+                        <td>${anterior.estatisticas.avisos}</td>
+                        <td>${analise.estatisticas.avisos}</td>
+                        <td>${mudancaAvisos > 0 ? '📈 +' + mudancaAvisos : mudancaAvisos < 0 ? '📉 ' + mudancaAvisos : '→ Sem mudança'}</td>
+                    </tr>
+                `;
+                
+                comparacaoHTML += '</tbody></table>';
+                document.getElementById('comparacaoOutput').innerHTML = comparacaoHTML;
+            }
+
+            // Aba Relatório
+            let relatorioHTML = `
+                <div class="alert alert-info">
+                    <strong>📋 Relatório Gerado em:</strong> ${new Date().toLocaleString('pt-BR')}
+                </div>
+                <div class="analysis-box">
+                    <h3>Resumo da Análise</h3>
+                    <p><strong>Status:</strong> <span class="status-${analise.status.toLowerCase()}">${analise.status}</span></p>
+                    <p><strong>Total de Linhas:</strong> ${analise.estatisticas.totalLinhas}</p>
+                    <p><strong>Erros:</strong> ${analise.estatisticas.errosEncontrados}</p>
+                    <p><strong>Avisos:</strong> ${analise.estatisticas.avisos}</p>
+                    <p><strong>Sucessos:</strong> ${analise.estatisticas.sucessos}</p>
+                </div>
+            `;
+
+            if (analise.problemasComuns.length > 0) {
+                relatorioHTML += `
+                    <div class="analysis-box">
+                        <h3>Recomendações</h3>
+                        <ul>
+                            ${analise.problemasComuns.map(p => `
+                                <li><strong>${p.problema}</strong> → ${p.solucao}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            document.getElementById('relatorioOutput').innerHTML = relatorioHTML;
+
+            // Adicionar ao histórico
+            estadoAtual.historico.push(analise);
+        }
+
+        // Mudar aba
+        function mudarAba(abaName) {
+            // Remover classe active de todos os botões e conteúdos
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Adicionar classe active ao botão e conteúdo clicado
+            event.target.classList.add('active');
+            document.getElementById(abaName).classList.add('active');
+        }
+
+        // Limpar tudo
+        function limparTudo() {
+            if (confirm('Deseja limpar o log atual?')) {
+                document.getElementById('logInput').value = '';
+                document.getElementById('fileInput').value = '';
+                document.getElementById('traducaoOutput').textContent = 'Aguardando análise...';
+                document.getElementById('analiseOutput').innerHTML = '';
+                document.getElementById('comparacaoOutput').innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">Execute pelo menos 2 análises para ver a comparação</p>';
+                document.getElementById('relatorioOutput').innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">Nenhum relatório gerado ainda</p>';
+            }
+        }
+
+        // Baixar relatório JSON
+        function baixarRelatorioJSON() {
+            if (!estadoAtual.analiseAtual) {
+                alert('Nenhuma análise para baixar!');
+                return;
+            }
+
+            const dataStr = JSON.stringify(estadoAtual.analiseAtual, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `relatorio_${new Date().getTime()}.json`;
+            link.click();
+        }
+
+        // Baixar relatório CSV
+        function baixarRelatorioCSV() {
+            if (!estadoAtual.analiseAtual) {
+                alert('Nenhuma análise para baixar!');
+                return;
+            }
+
+            const analise = estadoAtual.analiseAtual;
+            let csv = 'Tipo,Linha,Mensagem Original,Mensagem Traduzida\n';
+
+            analise.traducao.forEach(item => {
+                const tipo = item.tipo.toUpperCase();
+                csv += `"${tipo}","${item.original.replace(/"/g, '""')}","${item.traduzida.replace(/"/g, '""')}"\n`;
+            });
+
+            const dataBlob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `relatorio_${new Date().getTime()}.csv`;
+            link.click();
+        }
+
+        // Baixar relatório PDF (simulado como texto)
+        function baixarRelatorioPDF() {
+            if (!estadoAtual.analiseAtual) {
+                alert('Nenhuma análise para baixar!');
+                return;
+            }
+
+            const analise = estadoAtual.analiseAtual;
+            let pdfContent = `RELATÓRIO DE ANÁLISE DE LOG GITHUB ACTIONS\n`;
+            pdfContent += `${'='.repeat(60)}\n\n`;
+            pdfContent += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+            pdfContent += `Status: ${analise.status}\n\n`;
+            pdfContent += `ESTATÍSTICAS\n`;
+            pdfContent += `${'─'.repeat(60)}\n`;
+            pdfContent += `Total de Linhas: ${analise.estatisticas.totalLinhas}\n`;
+            pdfContent += `Erros: ${analise.estatisticas.errosEncontrados}\n`;
+            pdfContent += `Avisos: ${analise.estatisticas.avisos}\n`;
+            pdfContent += `Sucessos: ${analise.estatisticas.sucessos}\n\n`;
+
+            if (analise.erros.length > 0) {
+                pdfContent += `ERROS ENCONTRADOS\n`;
+                pdfContent += `${'─'.repeat(60)}\n`;
+                analise.erros.forEach(e => {
+                    pdfContent += `Linha ${e.linha}: ${e.traduzida}\n`;
+                });
+                pdfContent += '\n';
+            }
+
+            if (analise.problemasComuns.length > 0) {
+                pdfContent += `PROBLEMAS COMUNS\n`;
+                pdfContent += `${'─'.repeat(60)}\n`;
+                analise.problemasComuns.forEach(p => {
+                    pdfContent += `${p.problema}\nSolução: ${p.solucao}\n\n`;
+                });
+            }
+
+            const dataBlob = new Blob([pdfContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `relatorio_${new Date().getTime()}.txt`;
+            link.click();
+        }
+    </script>
+</body>
+</html>

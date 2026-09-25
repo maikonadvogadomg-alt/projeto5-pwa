@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparador de Versões</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+body{background:#0d1117;color:#e6edf3;font-family:system-ui,sans-serif;}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:12px;}
+input,select{background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:6px 10px;}
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;border:none;cursor:pointer;}
+.btn-blue{background:#1f6feb;color:#fff;}
+.btn-green{background:#238636;color:#fff;}
+.btn-gray{background:#21262d;color:#e6edf3;border:1px solid #30363d;}
+.drop{border:2px dashed #30363d;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:.2s;}
+.drop:hover{border-color:#58a6ff;background:#0d1f40;}
+.added{background:#0d2e16;color:#3fb950;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;}
+.removed{background:#3d1f1f;color:#f85149;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;}
+.same{background:#161b22;color:#8b949e;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;}
+.file-row{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid #21262d;cursor:pointer;font-size:12px;font-family:monospace;}
+.file-row:hover{background:#1c2128;}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;}
+.new{background:#0d2e16;color:#3fb950;}
+.del{background:#3d1f1f;color:#f85149;}
+.mod{background:#2d1f00;color:#d29922;}
+.same-b{background:#1c2128;color:#8b949e;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+</style>
+</head>
+<body class="p-4 min-h-screen">
+<div style="max-width:900px;margin:0 auto;">
+
+<div style="text-align:center;padding:16px 0 20px;">
+  <div style="font-size:28px;margin-bottom:6px;">🔍</div>
+  <h1 style="font-size:20px;font-weight:700;color:#58a6ff;">Comparador de Versões</h1>
+  <p style="color:#8b949e;font-size:13px;margin-top:4px;">Compare dois ZIPs e veja exatamente o que mudou</p>
+</div>
+
+<!-- Upload -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+  <div class="card">
+    <div style="font-size:12px;color:#8b949e;margin-bottom:8px;">📦 Versão A (mais antiga)</div>
+    <div class="drop" id="drop-a" onclick="document.getElementById('file-a').click()">
+      <div id="label-a" style="color:#8b949e;font-size:13px;">Clique ou arraste o ZIP</div>
+    </div>
+    <input type="file" id="file-a" accept=".zip" style="display:none" onchange="loadZip('a',this)">
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:#8b949e;margin-bottom:8px;">📦 Versão B (mais nova)</div>
+    <div class="drop" id="drop-b" onclick="document.getElementById('file-b').click()">
+      <div id="label-b" style="color:#8b949e;font-size:13px;">Clique ou arraste o ZIP</div>
+    </div>
+    <input type="file" id="file-b" accept=".zip" style="display:none" onchange="loadZip('b',this)">
+  </div>
+</div>
+
+<!-- Filtro -->
+<div class="card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <span style="font-size:12px;color:#8b949e;">Filtrar:</span>
+  <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="show-mod" checked style="accent-color:#d29922;"> <span style="color:#d29922;">Modificados</span>
+  </label>
+  <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="show-new" checked style="accent-color:#3fb950;"> <span style="color:#3fb950;">Novos</span>
+  </label>
+  <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="show-del" checked style="accent-color:#f85149;"> <span style="color:#f85149;">Removidos</span>
+  </label>
+  <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="show-same" style="accent-color:#8b949e;"> <span style="color:#8b949e;">Iguais</span>
+  </label>
+  <input type="text" id="filter-text" placeholder="🔍 buscar arquivo..." style="flex:1;min-width:140px;font-size:12px;height:28px;">
+  <button onclick="compareZips()" class="btn btn-blue" style="font-size:12px;">⚡ Comparar</button>
+</div>
+
+<!-- Resumo -->
+<div id="summary" style="display:none;" class="card">
+  <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;">
+    <span>📊 Total: <b id="s-total">0</b> arquivos</span>
+    <span style="color:#d29922;">✏️ Modificados: <b id="s-mod">0</b></span>
+    <span style="color:#3fb950;">➕ Novos: <b id="s-new">0</b></span>
+    <span style="color:#f85149;">➖ Removidos: <b id="s-del">0</b></span>
+    <span style="color:#8b949e;">= Iguais: <b id="s-same">0</b></span>
+  </div>
+  <div style="margin-top:8px;font-size:12px;color:#8b949e;">Clique em qualquer arquivo para ver o diff</div>
+</div>
+
+<!-- Lista de arquivos -->
+<div id="file-list" class="card" style="display:none;">
+  <div id="files-container"></div>
+</div>
+
+<!-- Diff viewer -->
+<div id="diff-panel" style="display:none;" class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div id="diff-title" style="font-size:13px;font-weight:700;font-family:monospace;color:#58a6ff;"></div>
+    <button onclick="document.getElementById('diff-panel').style.display='none'" class="btn btn-gray" style="font-size:11px;padding:4px 8px;">✕ Fechar</button>
+  </div>
+  <div id="diff-content" style="max-height:500px;overflow-y:auto;border-radius:6px;border:1px solid #30363d;"></div>
+</div>
+
+</div>
+
+<script>
+let zipA = null, zipB = null;
+let filesA = {}, filesB = {};
+let results = [];
+
+// Drag & drop
+['a','b'].forEach(side => {
+  const drop = document.getElementById(`drop-${side}`);
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor = '#58a6ff'; });
+  drop.addEventListener('dragleave', () => { drop.style.borderColor = '#30363d'; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.style.borderColor = '#30363d';
+    if (e.dataTransfer.files[0]) loadZipFile(side, e.dataTransfer.files[0]);
+  });
+});
+
+async function loadZip(side, input) {
+  if (input.files[0]) loadZipFile(side, input.files[0]);
+}
+
+async function loadZipFile(side, file) {
+  const label = document.getElementById(`label-${side}`);
+  const drop = document.getElementById(`drop-${side}`);
+  label.textContent = '⏳ Lendo...';
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const files = {};
+    for (const [name, entry] of Object.entries(zip.files)) {
+      if (entry.dir) continue;
+      // Pular binários e node_modules
+      const skip = ['node_modules/', '.git/', 'dist/', 'dist-apk/'].some(s => name.includes(s));
+      if (skip) continue;
+      const ext = name.split('.').pop()?.toLowerCase();
+      const textExts = ['ts','tsx','js','jsx','json','md','css','html','txt','env','yml','yaml','toml','sh','bat','py','cjs','mjs','svg'];
+      if (!textExts.includes(ext)) continue;
+      try {
+        files[normalPath(name)] = await entry.async('text');
+      } catch {}
+    }
+    if (side === 'a') { filesA = files; }
+    else { filesB = files; }
+    const count = Object.keys(files).length;
+    label.textContent = `✅ ${file.name} (${count} arquivos)`;
+    drop.style.borderColor = '#3fb950';
+    label.style.color = '#3fb950';
+  } catch(e) {
+    label.textContent = '❌ Erro: ' + e.message;
+    label.style.color = '#f85149';
+  }
+}
+
+function normalPath(p) {
+  // Remove primeiro segmento (nome da pasta do zip)
+  const parts = p.split('/');
+  return parts.length > 1 ? parts.slice(1).join('/') : p;
+}
+
+function compareZips() {
+  if (!Object.keys(filesA).length || !Object.keys(filesB).length) {
+    alert('Carregue os dois ZIPs primeiro!'); return;
+  }
+  const allKeys = new Set([...Object.keys(filesA), ...Object.keys(filesB)]);
+  results = [];
+  let mod=0, newf=0, del=0, same=0;
+
+  for (const key of allKeys) {
+    const a = filesA[key];
+    const b = filesB[key];
+    let status;
+    if (a === undefined) { status = 'new'; newf++; }
+    else if (b === undefined) { status = 'del'; del++; }
+    else if (a === b) { status = 'same'; same++; }
+    else { status = 'mod'; mod++; }
+    results.push({ key, status, a, b });
+  }
+
+  results.sort((x, y) => {
+    const order = {mod:0, new:1, del:2, same:3};
+    return (order[x.status] - order[y.status]) || x.key.localeCompare(y.key);
+  });
+
+  // Atualizar resumo
+  document.getElementById('s-total').textContent = allKeys.size;
+  document.getElementById('s-mod').textContent = mod;
+  document.getElementById('s-new').textContent = newf;
+  document.getElementById('s-del').textContent = del;
+  document.getElementById('s-same').textContent = same;
+  document.getElementById('summary').style.display = 'block';
+
+  renderList();
+}
+
+function renderList() {
+  const showMod = document.getElementById('show-mod').checked;
+  const showNew = document.getElementById('show-new').checked;
+  const showDel = document.getElementById('show-del').checked;
+  const showSame = document.getElementById('show-same').checked;
+  const filterText = document.getElementById('filter-text').value.toLowerCase();
+
+  const filtered = results.filter(r => {
+    if (!showMod && r.status === 'mod') return false;
+    if (!showNew && r.status === 'new') return false;
+    if (!showDel && r.status === 'del') return false;
+    if (!showSame && r.status === 'same') return false;
+    if (filterText && !r.key.toLowerCase().includes(filterText)) return false;
+    return true;
+  });
+
+  const badges = { mod:'<span class="badge mod">MODIFICADO</span>', new:'<span class="badge new">NOVO</span>', del:'<span class="badge del">REMOVIDO</span>', same:'<span class="badge same-b">IGUAL</span>' };
+
+  const container = document.getElementById('files-container');
+  container.innerHTML = filtered.map((r, i) => `
+    <div class="file-row" onclick="showDiff(${results.indexOf(r)})">
+      <span>${r.key}</span>
+      ${badges[r.status]}
+    </div>
+  `).join('') || '<div style="padding:20px;text-align:center;color:#8b949e;font-size:13px;">Nenhum arquivo com esses filtros</div>';
+
+  document.getElementById('file-list').style.display = 'block';
+}
+
+['show-mod','show-new','show-del','show-same'].forEach(id => {
+  document.getElementById(id).onchange = renderList;
+});
+document.getElementById('filter-text').oninput = renderList;
+
+function showDiff(i) {
+  const r = results[i];
+  document.getElementById('diff-title').textContent = r.key;
+  document.getElementById('diff-panel').style.display = 'block';
+
+  const content = document.getElementById('diff-content');
+
+  if (r.status === 'new') {
+    content.innerHTML = `<div class="added" style="padding:10px;">+++ ARQUIVO NOVO +++\n\n${esc(r.b)}</div>`;
+  } else if (r.status === 'del') {
+    content.innerHTML = `<div class="removed" style="padding:10px;">--- ARQUIVO REMOVIDO ---\n\n${esc(r.a)}</div>`;
+  } else if (r.status === 'same') {
+    content.innerHTML = `<div class="same" style="padding:10px;">= Arquivos idênticos =\n\n${esc(r.a)}</div>`;
+  } else {
+    // Diff linha a linha
+    const linesA = (r.a || '').split('\n');
+    const linesB = (r.b || '').split('\n');
+    content.innerHTML = diffLines(linesA, linesB);
+  }
+
+  document.getElementById('diff-panel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function diffLines(a, b) {
+  // Diff simples linha a linha
+  const maxA = a.length, maxB = b.length;
+  let html = '';
+  let i = 0, j = 0;
+
+  while (i < maxA || j < maxB) {
+    if (i >= maxA) {
+      html += `<div class="added">+ ${esc(b[j])}</div>`;
+      j++;
+    } else if (j >= maxB) {
+      html += `<div class="removed">- ${esc(a[i])}</div>`;
+      i++;
+    } else if (a[i] === b[j]) {
+      html += `<div class="same">  ${esc(a[i])}</div>`;
+      i++; j++;
+    } else {
+      // Procurar match próximo
+      let foundB = -1, foundA = -1;
+      for (let k = 1; k <= 5; k++) {
+        if (j+k < maxB && a[i] === b[j+k]) { foundB = k; break; }
+        if (i+k < maxA && b[j] === a[i+k]) { foundA = k; break; }
+      }
+      if (foundB !== -1 && (foundA === -1 || foundB <= foundA)) {
+        for (let k = 0; k < foundB; k++) {
+          html += `<div class="added">+ ${esc(b[j+k])}</div>`;
+        }
+        j += foundB;
+      } else if (foundA !== -1) {
+        for (let k = 0; k < foundA; k++) {
+          html += `<div class="removed">- ${esc(a[i+k])}</div>`;
+        }
+        i += foundA;
+      } else {
+        html += `<div class="removed">- ${esc(a[i])}</div>`;
+        html += `<div class="added">+ ${esc(b[j])}</div>`;
+        i++; j++;
+      }
+    }
+  }
+  return html || '<div class="same" style="padding:10px;">Sem diferenças visíveis</div>';
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

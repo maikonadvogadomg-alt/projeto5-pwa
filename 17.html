@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Estrutura de Projeto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #e9ecef;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 12px;
+            font-size: 0.8em;
+            background: #667eea;
+        }
+
+        .structure-tree {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 500px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .tree-item {
+            margin-left: 20px;
+            color: #333;
+        }
+
+        .tree-folder {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tree-file {
+            color: #764ba2;
+        }
+
+        .dependency-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .dependency-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dep-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .dep-version {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .dep-description {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left-color: #0c5460;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left-color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left-color: #721c24;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left-color: #856404;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .monorepo-section {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px dashed #667eea;
+            margin-bottom: 15px;
+        }
+
+        .monorepo-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: 1;
+            }
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ Gerador de Estrutura de Projeto</h1>
+            <p>Analisa ZIP, gera package.json limpo, scripts .bat e configurações</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Painel 1: Upload -->
+            <div class="panel">
+                <h2>📦 Upload do Projeto</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Arraste seu arquivo ZIP aqui</div>
+                    <div class="upload-hint">ou clique para selecionar</div>
+                    <input type="file" id="fileInput" accept=".zip">
+                </div>
+                <div id="uploadStatus" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- Painel 2: Configurações -->
+            <div class="panel">
+                <h2>⚙️ Configurações do Projeto</h2>
+                
+                <div class="form-group">
+                    <label for="projectName">Nome do Projeto:</label>
+                    <input type="text" id="projectName" placeholder="meu-projeto">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectVersion">Versão Inicial:</label>
+                    <input type="text" id="projectVersion" value="1.0.0" placeholder="1.0.0">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectType">Tipo de Projeto:</label>
+                    <select id="projectType">
+                        <option value="web">Web (HTML/CSS/JS)</option>
+                        <option value="react">React</option>
+                        <option value="vue">Vue.js</option>
+                        <option value="angular">Angular</option>
+                        <option value="node">Node.js</option>
+                        <option value="monorepo">Monorepo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ferramentas Adicionais:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="useVite" checked>
+                            <label for="useVite">Vite</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="useSW">
+                            <label for="useSW">Service Worker</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="useManifest">
+                            <label for="useManifest">Manifest.json</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="useESLint">
+                            <label for="useESLint">ESLint</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="usePrettier">
+                            <label for="usePrettier">Prettier</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="analisarProjeto()" style="width: 100%; margin-top: 20px;">
+                    🔍 Analisar Projeto
+                </button>
+            </div>
+
+            <!-- Painel 3: Resultados -->
+            <div class="panel full-width">
+                <h2>📊 Análise do Projeto</h2>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="mudarAba('estrutura')">🗂️ Estrutura</button>
+                    <button class="tab-btn" onclick="mudarAba('dependencias')">📚 Dependências</button>
+                    <button class="tab-btn" onclick="mudarAba('packagejson')">📋 package.json</button>
+                    <button class="tab-btn" onclick="mudarAba('scripts')">⚡ Scripts</button>
+                    <button class="tab-btn" onclick="mudarAba('configuracoes')">🔧 Configurações</button>
+                    <button class="tab-btn" onclick="mudarAba('bat')">🖥️ Arquivo .bat</button>
+                </div>
+
+                <!-- Aba Estrutura -->
+                <div id="estrutura" class="tab-content active">
+                    <div class="stats-grid" id="statsContainer"></div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Estrutura de Diretórios</h3>
+                    <div class="structure-tree scrollbar" id="estruturaOutput">
+                        Aguardando análise...
+                    </div>
+                </div>
+
+                <!-- Aba Dependências -->
+                <div id="dependencias" class="tab-content">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Dependências Detectadas</h3>
+                    <div id="dependenciasOutput">
+                        <p style="color: #999; text-align: center; padding: 40px;">
+                            Nenhuma dependência detectada ainda
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Aba package.json -->
+                <div id="packagejson" class="tab-content">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">package.json Gerado</h3>
+                    <div class="code-block" id="packageJsonOutput">
+{
+  "name": "seu-projeto",
+  "version": "1.0.0",
+  "description": "Projeto gerado automaticamente",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {}
+}
+                    </div>
+                    <button class="btn-success" onclick="copiarParaClipboard('packageJsonOutput')">
+                        📋 Copiar JSON
+                    </button>
+                    <button class="btn-success" onclick="baixarPackageJson()">
+                        📥 Baixar package.json
+                    </button>
+                </div>
+
+                <!-- Aba Scripts -->
+                <div id="scripts" class="tab-content">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Scripts NPM Gerados</h3>
+                    <div class="code-block" id="scriptsOutput">
+npm run dev       # Inicia servidor de desenvolvimento
+npm run build     # Constrói para produção
+npm run preview   # Visualiza build de produção
+npm run test      # Executa testes
+                    </div>
+                    <button class="btn-success" onclick="copiarParaClipboard('scriptsOutput')">
+                        📋 Copiar Scripts
+                    </button>
+                </div>
+
+                <!-- Aba Configurações -->
+                <div id="configuracoes" class="tab-content">
+                    <div class="tabs" style="margin-bottom: 20px;">
+                        <button class="tab-btn active" onclick="mudarConfiguracao('vite')">Vite</button>
+                        <button class="tab-btn" onclick="mudarConfiguracao('manifest')">Manifest</button>
+                        <button class="tab-btn" onclick="mudarConfiguracao('sw')">Service Worker</button>
+                        <button class="tab-btn" onclick="mudarConfiguracao('eslint')">ESLint</button>
+                    </div>
+
+                    <div id="vite" class="tab-content active">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">vite.config.js</h4>
+                        <div class="code-block" id="viteConfigOutput">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
+    open: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
+  }
+})
+                        </div>
+                        <button class="btn-success" onclick="copiarParaClipboard('viteConfigOutput')">
+                            📋 Copiar
+                        </button>
+                        <button class="btn-success" onclick="baixarArquivo('vite.config.js', document.getElementById('viteConfigOutput').textContent)">
+                            📥 Baixar
+                        </button>
+                    </div>
+
+                    <div id="manifest" class="tab-content">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">manifest.json</h4>
+                        <div class="code-block" id="manifestOutput">
+{
+  "name": "Meu Aplicativo",
+  "short_name": "App",
+  "description": "Descrição do aplicativo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+                        </div>
+                        <button class="btn-success" onclick="copiarParaClipboard('manifestOutput')">
+                            📋 Copiar
+                        </button>
+                        <button class="btn-success" onclick="baixarArquivo('manifest.json', document.getElementById('manifestOutput').textContent)">
+                            📥 Baixar
+                        </button>
+                    </div>
+
+                    <div id="sw" class="tab-content">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">service-worker.js</h4>
+                        <div class="code-block" id="swOutput">
+const CACHE_NAME = 'v1'
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/styles/main.css',
+  '/scripts/main.js'
+]
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  )
+})
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  )
+})
+                        </div>
+                        <button class="btn-success" onclick="copiarParaClipboard('swOutput')">
+                            📋 Copiar
+                        </button>
+                        <button class="btn-success" onclick="baixarArquivo('service-worker.js', document.getElementById('swOutput').textContent)">
+                            📥 Baixar
+                        </button>
+                    </div>
+
+                    <div id="eslint" class="tab-content">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">.eslintrc.json</h4>
+                        <div class="code-block" id="eslintOutput">
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "warn"
+  }
+}
+                        </div>
+                        <button class="btn-success" onclick="copiarParaClipboard('eslintOutput')">
+                            📋 Copiar
+                        </button>
+                        <button class="btn-success" onclick="baixarArquivo('.eslintrc.json', document.getElementById('eslintOutput').textContent)">
+                            📥 Baixar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Aba .bat -->
+                <div id="bat" class="tab-content">
+                    <div class="alert alert-info">
+                        <strong>💡 Dica:</strong> Este arquivo .bat cria a estrutura completa do projeto e instala dependências
+                    </div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">criar-projeto.bat</h3>
+                    <div class="code-block" id="batOutput">
+@echo off
+REM Gerador de Projeto - Criado automaticamente
+REM Este script cria a estrutura do projeto e instala dependências
+
+setlocal enabledelayedexpansion
+
+echo ========================================
+echo Criando estrutura do projeto...
+echo ========================================
+
+REM Criar diretórios
+mkdir src
+mkdir public
+mkdir dist
+mkdir node_modules
+
+REM Criar arquivos principais
+echo. > .gitignore
+echo. > README.md
+
+REM Instalar dependências
+echo.
+echo Instalando dependências NPM...
+call npm install
+
+echo.
+echo ========================================
+echo Projeto criado com sucesso!
+echo ========================================
+echo.
+echo Comandos disponíveis:
+echo - npm run dev     : Inicia servidor de desenvolvimento
+echo - npm run build   : Constrói para produção
+echo - npm run test    : Executa testes
+echo.
+pause
+                    </div>
+                    <button class="btn-success" onclick="copiarParaClipboard('batOutput')">
+                        📋 Copiar Script
+                    </button>
+                    <button class="btn-success" onclick="baixarArquivo('criar-projeto.bat', document.getElementById('batOutput').textContent)">
+                        📥 Baixar .bat
+                    </button>
+                    <button class="btn-info" onclick="gerarBatAvancado()">
+                        🚀 Gerar .bat Avançado
+                    </button>
+                </div>
+            </div>
+
+            <!-- Painel 4: Monorepo -->
+            <div class="panel full-width" id="monorepoPanel" style="display: none;">
+                <h2>🏢 Configuração Monorepo</h2>
+                <div id="monorepoConfig"></div>
+            </div>
+
+            <!-- Painel 5: Download -->
+            <div class="panel full-width">
+                <h2>📥 Baixar Tudo</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <button class="btn-success" onclick="baixarTudo()">
+                        📦 Baixar Projeto Completo (.zip)
+                    </button>
+                    <button class="btn-success" onclick="gerarRelatorio()">
+                        📄 Gerar Relatório
+                    </button>
+                    <button class="btn-secondary" onclick="limparTudo()">
+                        🗑️ Limpar Tudo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biblioteca JSZip para manipular ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script>
+        // Estado global
+        let estadoGlobal = {
+            projeto: null,
+            estrutura: {},
+            dependencias: {},
+            packageJson: {},
+            scripts: {},
+            configuracoes: {}
+        };
+
+        // Dicionário de dependências com descrição em português
+        const descricaoDependencias = {
+            'react': 'Biblioteca JavaScript para construir interfaces de usuário com componentes reutilizáveis',
+            'react-dom': 'Renderização de componentes React no DOM',
+            'vue': 'Framework progressivo para construir interfaces de usuário',
+            'angular': 'Framework completo para aplicações web',
+            'express': 'Framework web minimalista para Node.js',
+            'axios': 'Cliente HTTP baseado em Promise para fazer requisições',
+            'lodash': 'Biblioteca utilitária com funções práticas para manipulação de dados',
+            'moment': 'Biblioteca para manipulação e formatação de datas',
+            'date-fns': 'Ferramentas modernas para trabalhar com datas',
+            'webpack': 'Bundler de módulos para JavaScript',
+            'vite': 'Build tool extremamente rápido para desenvolvimento web moderno',
+            'babel': 'Transpilador JavaScript para converter código moderno em compatível',
+            'eslint': 'Ferramenta para identificar e corrigir problemas no código JavaScript',
+            'prettier': 'Formatador de código automático',
+            'jest': 'Framework de testes para JavaScript',
+            'mocha': 'Framework de testes flexível para Node.js',
+            'typescript': 'Superset tipado de JavaScript que compila para JavaScript puro',
+            'tailwindcss': 'Framework CSS utilitário para desenvolvimento rápido de interfaces',
+            'bootstrap': 'Framework CSS com componentes prontos',
+            'sass': 'Pré-processador CSS com sintaxe melhorada',
+            'postcss': 'Ferramenta para transformar CSS com plugins JavaScript',
+            'dotenv': 'Carrega variáveis de ambiente de arquivo .env',
+            'cors': 'Middleware para habilitar CORS em aplicações Express',
+            'helmet': 'Middleware de segurança para Express',
+            'mongoose': 'ODM (Object Document Mapper) para MongoDB',
+            'sequelize': 'ORM (Object Relational Mapping) para bancos de dados SQL',
+            'redis': 'Cliente para trabalhar com Redis (cache e fila)',
+            'socket.io': 'Biblioteca para comunicação em tempo real via WebSocket',
+            'graphql': 'Linguagem de query para APIs',
+            'apollo-client': 'Cliente GraphQL para aplicações JavaScript',
+            'next': 'Framework React com renderização no servidor (SSR)',
+            'nuxt': 'Framework Vue com renderização no servidor (SSR)',
+            'gatsby': 'Gerador de sites estáticos baseado em React',
+            'strapi': 'CMS headless de código aberto',
+            'firebase': 'Plataforma de desenvolvimento de aplicações do Google',
+            'supabase': 'Alternativa open-source ao Firebase com PostgreSQL',
+            'prisma': 'ORM moderno com geração automática de tipos',
+            'fastify': 'Framework web rápido e eficiente para Node.js',
+            'koa': 'Framework web minimalista e expressivo',
+            'hapi': 'Framework web rico em recursos',
+            'socket.io-client': 'Cliente Socket.IO para conectar a servidores em tempo real',
+            'pug': 'Template engine para HTML',
+            'ejs': 'Template engine JavaScript embutido',
+            'handlebars': 'Template engine lógico',
+            'react-router': 'Roteamento para aplicações React',
+            'vue-router': 'Roteamento para aplicações Vue',
+            'redux': 'Gerenciador de estado previsível para JavaScript',
+            'vuex': 'Gerenciador de estado para Vue',
+            'zustand': 'Gerenciador de estado minimalista',
+            'recoil': 'Gerenciador de estado experimental do Facebook',
+            'formik': 'Biblioteca para gerenciar formulários em React',
+            'react-hook-form': 'Biblioteca leve para formulários com React Hooks',
+            'yup': 'Validador de schema de dados',
+            'joi': 'Validador de schema poderoso para Node.js',
+            'multer': 'Middleware para upload de arquivos em Express',
+            'sharp': 'Processamento de imagens de alta performance',
+            'ffmpeg': 'Processamento de vídeo e áudio',
+            'puppeteer': 'Biblioteca para automação do Chrome/Chromium',
+            'cheerio': 'Implementação jQuery para Node.js (web scraping)',
+            'axios': 'Cliente HTTP para fazer requisições',
+            'node-fetch': 'Implementação de Fetch API para Node.js',
+            'got': 'Cliente HTTP humano para Node.js',
+            'pm2': 'Gerenciador de processos para Node.js em produção',
+            'nodemon': 'Monitora mudanças e reinicia aplicação automaticamente',
+            'concurrently': 'Executa múltiplos comandos concorrentemente',
+            'cross-env': 'Define variáveis de ambiente multiplataforma',
+            'husky': 'Git hooks para rodar scripts antes de commits',
+            'lint-staged': 'Executa linters em arquivos staged do git',
+            'commitizen': 'Ferramenta para commits padronizados',
+            'semantic-release': 'Automatiza versionamento e publicação',
+            'rollup': 'Bundler de módulos para JavaScript',
+            'esbuild': 'Bundler JavaScript extremamente rápido',
+            'parcel': 'Bundler web com configuração zero',
+            'snowpack': 'Build tool moderno para desenvolvimento web',
+            'turbopack': 'Bundler Rust de ultra-alta performance',
+            'vitest': 'Framework de testes unitários com Vite',
+            'cypress': 'Framework de testes E2E (end-to-end)',
+            'playwright': 'Automação de navegador para testes',
+            'selenium': 'Framework para automação de testes web',
+            'webdriver': 'Protocolo para automação de navegadores',
+            'storybook': 'Ambiente para desenvolvimento de componentes isolados',
+            'chromatic': 'Teste visual para Storybook',
+            'percy': 'Teste visual para aplicações web',
+            'sentry': 'Monitoramento de erros e performance',
+            'datadog': 'Plataforma de monitoramento e observabilidade',
+            'newrelic': 'Monitoramento de performance de aplicações',
+            'logrocket': 'Reprodutor de sessão para debugging',
+            'mixpanel': 'Análise de eventos e comportamento do usuário',
+            'segment': 'Plataforma de dados para rastrear eventos',
+            'amplitude': 'Análise de produto e comportamento do usuário',
+            'google-analytics': 'Análise de tráfego e comportamento',
+            'matomo': 'Alternativa open-source ao Google Analytics',
+            'plausible': 'Analytics simples e privado',
+            'fathom': 'Analytics simples sem rastreamento de usuários',
+            'hotjar': 'Ferramentas de feedback e análise de usuário',
+            'intercom': 'Plataforma de comunicação com clientes',
+            'zendesk': 'Plataforma de suporte ao cliente',
+            'freshdesk': 'Software de helpdesk e suporte',
+            'slack': 'Plataforma de comunicação para equipes',
+            'discord': 'Plataforma de comunicação e comunidade',
+            'twilio': 'Plataforma de comunicação (SMS, voz, vídeo)',
+            'sendgrid': 'Serviço de envio de emails em escala',
+            'mailgun': 'API de email para desenvolvedores',
+            'nodemailer': 'Módulo para enviar emails com Node.js',
+            'stripe': 'Plataforma de pagamentos online',
+            'paypal': 'Processador de pagamentos',
+            'square': 'Plataforma de pagamentos',
+            'braintree': 'Gateway de pagamentos',
+            'razorpay': 'Plataforma de pagamentos para Índia',
+            'mercadopago': 'Plataforma de pagamentos para América Latina',
+            'aws-sdk': 'SDK para serviços Amazon Web Services',
+            'azure-sdk': 'SDK para serviços Microsoft Azure',
+            'google-cloud': 'SDK para serviços Google Cloud',
+            'digitalocean': 'Cliente para DigitalOcean',
+            'heroku': 'Plataforma de hospedagem em nuvem',
+            'vercel': 'Plataforma de hospedagem para Next.js',
+            'netlify': 'Plataforma de hospedagem para sites estáticos',
+            'railway': 'Plataforma de hospedagem moderna',
+            'render': 'Plataforma de hospedagem em nuvem',
+            'fly': 'Plataforma de hospedagem de aplicações',
+            'docker': 'Containerização de aplicações',
+            'kubernetes': 'Orquestração de containers',
+            'terraform': 'Infraestrutura como código',
+            'ansible': 'Automação de infraestrutura',
+            'vagrant': 'Ferramenta para criar ambientes de desenvolvimento',
+            'git': 'Sistema de controle de versão',
+            'github': 'Plataforma de hospedagem de repositórios Git',
+            'gitlab': 'Plataforma de hospedagem de repositórios Git',
+            'bitbucket': 'Plataforma de hospedagem de repositórios Git',
+            'gitea': 'Serviço Git auto-hospedado',
+            'jenkins': 'Servidor de automação para CI/CD',
+            'gitlab-ci': 'Integração contínua do GitLab',
+            'github-actions': 'Automação do GitHub',
+            'circleci': 'Plataforma de CI/CD',
+            'travis-ci': 'Serviço de integração contínua',
+            'appveyor': 'CI/CD para Windows',
+            'codecov': 'Cobertura de testes',
+            'coveralls': 'Serviço de cobertura de código',
+            'sonarqube': 'Análise de qualidade de código',
+            'codeclimate': 'Análise de qualidade de código',
+            'dependabot': 'Automação de atualizações de dependências',
+            'renovate': 'Automação de atualizações de dependências',
+            'snyk': 'Segurança de dependências e vulnerabilidades',
+            'npm-audit': 'Auditoria de segurança de pacotes NPM',
+            'yarn': 'Gerenciador de pacotes alternativo ao NPM',
+            'pnpm': 'Gerenciador de pacotes rápido e eficiente',
+            'bun': 'Runtime JavaScript rápido e moderno',
+            'deno': 'Runtime JavaScript/TypeScript seguro',
+            'node': 'Runtime JavaScript para servidor',
+            'electron': 'Framework para criar aplicações desktop',
+            'tauri': 'Framework leve para aplicações desktop',
+            'nwjs': 'Framework para aplicações desktop com Node.js',
+            'react-native': 'Framework para aplicações mobile',
+            'flutter': 'Framework para aplicações mobile (Dart)',
+            'ionic': 'Framework para aplicações mobile híbridas',
+            'cordova': 'Framework para aplicações mobile híbridas',
+            'expo': 'Plataforma para desenvolvimento React Native',
+            'capacitor': 'Framework para aplicações web em mobile',
+            'webview': 'Componente para renderizar web em aplicações native'
+        };
+
+        // Setup drag and drop
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                processarZip(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                processarZip(e.target.files[0]);
+            }
+        });
+
+        // Processar arquivo ZIP
+        async function processarZip(file) {
+            try {
+                const zip = new JSZip();
+                const conteudo = await zip.loadAsync(file);
+                
+                const estrutura = {};
+                const dependencias = {};
+                let packageJsonContent = null;
+
+                // Analisar conteúdo do ZIP
+                conteudo.forEach((relativePath, zipEntry) => {
+                    if (relativePath.includes('package.json')) {
+                        zipEntry.async('string').then(content => {
+                            packageJsonContent = JSON.parse(content);
+                            extrairDependencias(packageJsonContent, dependencias);
+                        });
+                    }
+                    
+                    // Construir árvore de diretórios
+                    const partes = relativePath.split('/');
+                    let atual = estrutura;
+                    partes.forEach((parte, index) => {
+                        if (parte) {
+                            if (!atual[parte]) {
+                                atual[parte] = {};
+                            }
+                            if (index === partes.length - 1) {
+                                atual[parte]._arquivo = true;
+                            }
+                            atual = atual[parte];
+                        }
+                    });
+                });
+
+                estadoGlobal.estrutura = estrutura;
+                estadoGlobal.dependencias = dependencias;
+                estadoGlobal.packageJson = packageJsonContent || {};
+
+                exibirEstrutura();
+                exibirDependencias();
+                gerarPackageJson();
+                gerarScripts();
+                gerarConfiguracoes();
+                gerarBat();
+
+                document.getElementById('uploadStatus').innerHTML = 
+                    '<div class="alert alert-success">✅ Projeto analisado com sucesso!</div>';
+
+            } catch (error) {
+                document.getElementById('uploadStatus').innerHTML = 
+                    `<div class="alert alert-error">❌ Erro ao processar ZIP: ${error.message}</div>`;
+            }
+        }
+
+        // Extrair dependências
+        function extrairDependencias(packageJson, dependencias) {
+            const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+            Object.entries(deps).forEach(([nome, versao]) => {
+                dependencias[nome] = versao;
+            });
+        }
+
+        // Exibir estrutura
+        function exibirEstrutura() {
+            let html = renderizarArvore(estadoGlobal.estrutura, '');
+            document.getElementById('estruturaOutput').innerHTML = html;
+
+            // Atualizar estatísticas
+            const stats = calcularEstatisticas();
+            document.getElementById('statsContainer').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.arquivos}</div>
+                    <div class="stat-label">Arquivos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.pastas}</div>
+                    <div class="stat-label">Pastas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.dependencias}</div>
+                    <div class="stat-label">Dependências</div>
+                </div>
+            `;
+        }
+
+        // Renderizar árvore de diretórios
+        function renderizarArvore(obj, prefix = '') {
+            let html = '';
+            Object.entries(obj).forEach(([chave, valor]) => {
+                if (chave === '_arquivo') return;
+                
+                const isArquivo = valor._arquivo;
+                const classe = isArquivo ? 'tree-file' : 'tree-folder';
+                const icon = isArquivo ? '📄' : '📁';
+                
+                html += `<div class="tree-item"><span class="${classe}">${icon} ${chave}</span>`;
+                
+                if (!isArquivo && Object.keys(valor).length > 0) {
+                    html += renderizarArvore(valor, prefix + '  ');
+                }
+                html += '</div>';
+            });
+            return html;
+        }
+
+        // Calcular estatísticas
+        function calcularEstatisticas() {
+            let arquivos = 0, pastas = 0;
+            
+            function contar(obj) {
+                Object.entries(obj).forEach(([chave, valor]) => {
+                    if (chave === '_arquivo') return;
+                    if (valor._arquivo) {
+                        arquivos++;
+                    } else {
+                        pastas++;
+                        contar(valor);
+                    }
+                });
+            }
+            
+            contar(estadoGlobal.estrutura);
+            return { 
+                arquivos, 
+                pastas, 
+                dependencias: Object.keys(estadoGlobal.dependencias).length 
+            };
+        }
+
+        // Exibir dependências
+        function exibirDependencias() {
+            let html = '<ul class="dependency-list">';
+            
+            Object.entries(estadoGlobal.dependencias).forEach(([nome, versao]) => {
+                const descricao = descricaoDependencias[nome] || 'Dependência do projeto';
+                html += `
+                    <li class="dependency-item">
+                        <div>
+                            <div class="dep-name">📦 ${nome}</div>
+                            <div class="dep-description">${descricao}</div>
+                        </div>
+                        <div class="dep-version">${versao}</div>
+                    </li>
+                `;
+            });
+            
+            html += '</ul>';
+            document.getElementById('dependenciasOutput').innerHTML = html || 
+                '<p style="color: #999; text-align: center; padding: 40px;">Nenhuma dependência detectada</p>';
+        }
+
+        // Gerar package.json
+        function gerarPackageJson() {
+            const projectName = document.getElementById('projectName').value || 'meu-projeto';
+            const projectVersion = document.getElementById('projectVersion').value || '1.0.0';
+
+            const packageJson = {
+                name: projectName,
+                version: projectVersion,
+                description: "Projeto gerado automaticamente",
+                main: "index.js",
+                scripts: {
+                    "dev": "vite",
+                    "build": "vite build",
+                    "preview": "vite preview",
+                    "test": "vitest"
+                },
+                dependencies: estadoGlobal.dependencias,
+                devDependencies: {
+                    "vite": "^4.0.0",
+                    "vitest": "^0.34.0"
+                }
+            };
+
+            estadoGlobal.packageJson = packageJson;
+            document.getElementById('packageJsonOutput').textContent = JSON.stringify(packageJson, null, 2);
+        }
+
+        // Gerar scripts
+        function gerarScripts() {
+            const projectType = document.getElementById('projectType').value;
+            let scripts = `npm run dev       # Inicia servidor de desenvolvimento
+npm run build     # Constrói para produção
+npm run preview   # Visualiza build de produção
+npm run test      # Executa testes`;
+
+            if (projectType === 'react') {
+                scripts += `
+npm run lint      # Verifica erros de código
+npm run format    # Formata código`;
+            }
+
+            document.getElementById('scriptsOutput').textContent = scripts;
+        }
+
+        // Gerar configurações
+        function gerarConfiguracoes() {
+            const projectType = document.getElementById('projectType').value;
+
+            // Vite config
+            let viteConfig = `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
+    open: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
+  }
+})`;
+
+            if (projectType === 'vue') {
+                viteConfig = viteConfig.replace('react', 'vue').replace('@vitejs/plugin-react', '@vitejs/plugin-vue');
+            }
+
+            document.getElementById('viteConfigOutput').textContent = viteConfig;
+        }
+
+        // Gerar arquivo .bat
+        function gerarBat() {
+            const projectName = document.getElementById('projectName').value || 'meu-projeto';
+            const projectType = document.getElementById('projectType').value;
+            const useVite = document.getElementById('useVite').checked;
+            const useSW = document.getElementById('useSW').checked;
+            const useManifest = document.getElementById('useManifest').checked;
+
+            let batContent = `@echo off
+REM Gerador de Projeto: ${projectName}
+REM Tipo: ${projectType}
+REM Data: ${new Date().toLocaleString('pt-BR')}
+
+setlocal enabledelayedexpansion
+
+echo ========================================
+echo Criando estrutura do projeto: ${projectName}
+echo ========================================
+echo.
+
+REM Criar diretórios principais
+echo Criando diretórios...
+mkdir src
+mkdir public
+mkdir dist
+mkdir tests
+
+REM Criar subdiretórios
+mkdir src\\components
+mkdir src\\pages
+mkdir src\\styles
+mkdir src\\utils
+mkdir public\\images
+mkdir public\\icons
+
+REM Criar arquivos principais
+echo Criando arquivos...
+(
+  echo {
+  echo   "name": "${projectName}",
+  echo   "version": "1.0.0",
+  echo   "description": "Projeto ${projectType}",
+  echo   "scripts": {
+  echo     "dev": "vite",
+  echo     "build": "vite build",
+  echo     "preview": "vite preview"
+  echo   }
+  echo }
+) > package.json
+
+echo. > .gitignore
+echo node_modules/ >> .gitignore
+echo dist/ >> .gitignore
+echo .env >> .gitignore
+
+echo. > README.md
+echo # ${projectName} >> README.md
+echo Projeto ${projectType} criado automaticamente >> README.md
+
+REM Criar arquivos de configuração
+echo Criando configurações...
+(
+  echo import { defineConfig } from 'vite'
+  echo export default defineConfig({
+  echo   server: { port: 3000 }
+  echo })
+) > vite.config.js
+
+${useSW ? `
+REM Criar Service Worker
+(
+  echo const CACHE_NAME = 'v1'
+  echo self.addEventListener('install', event => {
+  echo   console.log('Service Worker instalado')
+  echo })
+) > public\\service-worker.js
+` : ''}
+
+${useManifest ? `
+REM Criar Manifest
+(
+  echo {
+  echo   "name": "${projectName}",
+  echo   "short_name": "App",
+  echo   "start_url": "/",
+  echo   "display": "standalone"
+  echo }
+) > public\\manifest.json
+` : ''}
+
+REM Instalar dependências
+echo.
+echo Instalando dependências NPM...
+call npm install
+
+echo.
+echo ========================================
+echo Projeto criado com sucesso!
+echo ========================================
+echo.
+echo Estrutura criada:
+echo - src/              : Código-fonte
+echo - public/           : Arquivos estáticos
+echo - dist/             : Build de produção
+echo - tests/            : Testes
+echo.
+echo Próximos passos:
+echo 1. cd ${projectName}
+echo 2. npm run dev
+echo.
+pause`;
+
+            document.getElementById('batOutput').textContent = batContent;
+        }
+
+        // Gerar .bat avançado
+        function gerarBatAvancado() {
+            const projectName = document.getElementById('projectName').value || 'meu-projeto';
+            const useESLint = document.getElementById('useESLint').checked;
+            const usePrettier = document.getElementById('usePrettier').checked;
+
+            let batAvancado = `@echo off
+REM Script Avançado de Configuração
+REM Projeto: ${projectName}
+
+setlocal enabledelayedexpansion
+
+echo ========================================
+echo Configuração Avançada do Projeto
+echo ========================================
+echo.
+
+${useESLint ? `
+echo Configurando ESLint...
+call npm install --save-dev eslint
+call npx eslint --init
+` : ''}
+
+${usePrettier ? `
+echo Configurando Prettier...
+call npm install --save-dev prettier
+(
+  echo {
+  echo   "semi": true,
+  echo   "singleQuote": true,
+  echo   "tabWidth": 2
+  echo }
+) > .prettierrc
+` : ''}
+
+echo.
+echo Executando verificações...
+call npm run build
+
+echo.
+echo ========================================
+echo Configuração concluída!
+echo ========================================
+pause`;
+
+            alert('Script avançado gerado! Verifique a aba .bat');
+            document.getElementById('batOutput').textContent = batAvancado;
+        }
+
+        // Funções auxiliares
+        function mudarAba(abaName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(abaName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function mudarConfiguracao(configName) {
+            document.querySelectorAll('#configuracoes .tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#configuracoes .tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(configName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function copiarParaClipboard(elementId) {
+            const elemento = document.getElementById(elementId);
+            const texto = elemento.textContent;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('✅ Copiado para a área de transferência!');
+            });
+        }
+
+        function baixarArquivo(nome, conteudo) {
+            const blob = new Blob([conteudo], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nome;
+            link.click();
+        }
+
+        function baixarPackageJson() {
+            const conteudo = JSON.stringify(estadoGlobal.packageJson, null, 2);
+            baixarArquivo('package.json', conteudo);
+        }
+
+        function analisarProjeto() {
+            if (Object.keys(estadoGlobal.estrutura).length === 0) {
+                alert('Por favor, primeiro faça upload de um arquivo ZIP!');
+                return;
+            }
+            exibirEstrutura();
+            exibirDependencias();
+            gerarPackageJson();
+            mudarAba('estrutura');
+        }
+
+        function baixarTudo() {
+            alert('Funcionalidade de download completo em desenvolvimento!');
+        }
+
+        function gerarRelatorio() {
+            const relatorio = `
+RELATÓRIO DO PROJETO
+====================
+
+Nome: ${document.getElementById('projectName').value}
+Versão: ${document.getElementById('projectVersion').value}
+Tipo: ${document.getElementById('projectType').value}
+Data: ${new Date().toLocaleString('pt-BR')}
+
+DEPENDÊNCIAS DETECTADAS:
+${Object.entries(estadoGlobal.dependencias).map(([nome, versao]) => `- ${nome}: ${versao}`).join('\n')}
+
+ESTRUTURA DE DIRETÓRIOS:
+${renderizarArvore(estadoGlobal.estrutura)}
+
+PRÓXIMOS PASSOS:
+1. Revisar package.json
+2. Executar arquivo .bat para criar estrutura
+3. Instalar dependências: npm install
+4. Iniciar desenvolvimento: npm run dev
+            `;
+
+            baixarArquivo(`relatorio-${document.getElementById('projectName').value}.txt`, relatorio);
+        }
+
+        function limparTudo() {
+            if (confirm('Deseja limpar tudo?')) {
+                estadoGlobal = { projeto: null, estrutura: {}, dependencias: {}, packageJson: {}, scripts: {}, configuracoes: {} };
+                document.getElementById('fileInput').value = '';
+                document.getElementById('uploadStatus').innerHTML = '';
+                alert('Tudo foi limpo!');
+            }
+        }
+    </script>
+</body>
+</html>

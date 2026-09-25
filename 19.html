@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Analisador de Projeto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0d1117;color:#e6edf3;font-family:system-ui,sans-serif;min-height:100dvh;padding:16px;}
+h1{color:#58a6ff;font-size:18px;margin-bottom:4px;}
+.sub{color:#8b949e;font-size:13px;margin-bottom:20px;}
+.drop{border:2px dashed #30363d;border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;}
+.drop:hover,.drop.over{border-color:#58a6ff;background:#0d1f40;}
+.drop .icon{font-size:36px;margin-bottom:8px;}
+.drop h2{font-size:14px;font-weight:600;margin-bottom:4px;}
+.drop p{font-size:12px;color:#8b949e;}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;margin-bottom:14px;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #30363d;}
+.card-hdr h3{font-size:13px;font-weight:600;}
+.card-body{padding:12px 14px;}
+.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;}
+.btn-blue{background:#1f6feb;color:#fff;}
+.btn-gray{background:#21262d;color:#e6edf3;border:1px solid #30363d;}
+.btn-green{background:#238636;color:#fff;}
+pre{background:#0a0e14;border-radius:6px;padding:12px;font-size:12px;font-family:'Courier New',monospace;white-space:pre-wrap;overflow-x:auto;color:#e6edf3;line-height:1.5;}
+.tree-line{font-family:monospace;font-size:12px;line-height:1.6;color:#8b949e;}
+.tree-line.dir{color:#58a6ff;}
+.tree-line.file{color:#e6edf3;}
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px;}
+.badge-js{background:#2d2000;color:#d29922;}
+.badge-html{background:#0d2030;color:#58a6ff;}
+.badge-css{background:#200d30;color:#bc8cff;}
+.badge-py{background:#0d2e16;color:#3fb950;}
+.badge-json{background:#1c2128;color:#8b949e;}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:12px;}
+.stat{text-align:center;}
+.stat .n{font-size:22px;font-weight:700;color:#58a6ff;}
+.stat .l{font-size:11px;color:#8b949e;}
+#result{display:none;}
+textarea.out{width:100%;height:280px;background:#0a0e14;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:10px;font-size:11px;font-family:monospace;resize:vertical;}
+</style>
+</head>
+<body>
+
+<h1>🔍 Analisador de Projeto</h1>
+<p class="sub">Importe um ZIP — gera o plano, estrutura e comandos para recriar.</p>
+
+<div class="drop" id="drop" onclick="document.getElementById('zip-in').click()">
+  <div class="icon">📦</div>
+  <h2>Clique ou arraste o ZIP aqui</h2>
+  <p>Analisa a estrutura e gera o plano completo do projeto</p>
+</div>
+<input type="file" id="zip-in" accept=".zip" style="display:none" onchange="analyze(this)">
+
+<div id="result">
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="card-hdr"><h3>📊 Resumo</h3></div>
+    <div class="card-body">
+      <div class="stats" id="stats"></div>
+    </div>
+  </div>
+
+  <!-- Árvore -->
+  <div class="card">
+    <div class="card-hdr">
+      <h3>🌳 Estrutura de Arquivos</h3>
+      <button class="btn btn-gray" onclick="copyEl('tree-out')">📋 Copiar</button>
+    </div>
+    <div class="card-body">
+      <pre id="tree-out"></pre>
+    </div>
+  </div>
+
+  <!-- Plano -->
+  <div class="card">
+    <div class="card-hdr">
+      <h3>📋 PLANO DO PROJETO</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-gray" onclick="copyEl('plano-out')">📋 Copiar</button>
+        <button class="btn btn-green" onclick="downloadEl('plano-out','PLANO.md')">⬇ .md</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <textarea class="out" id="plano-out" readonly></textarea>
+    </div>
+  </div>
+
+  <!-- Comandos -->
+  <div class="card">
+    <div class="card-hdr">
+      <h3>⚡ Comandos para recriar a estrutura</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-gray" onclick="copyEl('cmds-out')">📋 Copiar</button>
+        <button class="btn btn-green" onclick="downloadEl('cmds-out','criar_estrutura.bat')">⬇ .bat</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <pre id="cmds-out"></pre>
+      <p style="font-size:11px;color:#8b949e;margin-top:8px;">Execute o .bat no Windows para criar todas as pastas e arquivos vazios automaticamente.</p>
+    </div>
+  </div>
+
+  <!-- Conteúdo dos arquivos chave -->
+  <div class="card">
+    <div class="card-hdr">
+      <h3>📄 Arquivos Chave (conteúdo)</h3>
+      <button class="btn btn-gray" onclick="copyEl('files-out')">📋 Copiar</button>
+    </div>
+    <div class="card-body">
+      <textarea class="out" id="files-out" readonly style="height:400px;"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e=>{e.preventDefault();drop.classList.add('over');});
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{e.preventDefault();drop.classList.remove('over');if(e.dataTransfer.files[0])runAnalysis(e.dataTransfer.files[0]);});
+
+async function analyze(input) {
+  if (input.files[0]) runAnalysis(input.files[0]);
+}
+
+async function runAnalysis(file) {
+  drop.innerHTML = '<div class="icon">⏳</div><h2>Analisando...</h2>';
+
+  const zip = await JSZip.loadAsync(file);
+  const entries = [];
+
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    const ext = (name.split('.').pop()||'').toLowerCase();
+    const textExts = new Set(['html','htm','css','js','ts','jsx','tsx','json','md','txt','py','svg','xml','sh','bat','yaml','yml','env','toml','ini','cjs','mjs']);
+    let content = null;
+    if (textExts.has(ext)) {
+      try { content = await entry.async('text'); } catch{}
+    }
+    entries.push({ path: name, ext, content, size: content ? content.length : 0, lines: content ? content.split('\n').length : 0 });
+  }
+
+  entries.sort((a,b) => a.path.localeCompare(b.path));
+
+  // Detectar raiz
+  const rootPrefix = detectRoot(entries.map(e=>e.path));
+  const clean = entries.map(e => ({...e, clean: rootPrefix ? e.path.slice(rootPrefix.length) : e.path})).filter(e=>e.clean);
+
+  buildStats(clean, file.name);
+  buildTree(clean);
+  buildPlano(clean, file.name);
+  buildCommands(clean);
+  buildFilesContent(clean);
+
+  document.getElementById('result').style.display = 'block';
+  drop.innerHTML = `<div class="icon">✅</div><h2>${file.name} analisado</h2><p>${clean.length} arquivos processados</p>`;
+}
+
+function detectRoot(paths) {
+  if (!paths.length) return '';
+  const first = paths[0].split('/')[0];
+  if (paths.every(p => p.startsWith(first+'/'))) return first+'/';
+  return '';
+}
+
+function buildStats(entries, fileName) {
+  const byExt = {};
+  let totalLines = 0, textFiles = 0;
+  for (const e of entries) {
+    byExt[e.ext] = (byExt[e.ext]||0)+1;
+    if (e.content) { totalLines+=e.lines; textFiles++; }
+  }
+  const top = Object.entries(byExt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="n">${entries.length}</div><div class="l">arquivos</div></div>
+    <div class="stat"><div class="n">${textFiles}</div><div class="l">com código</div></div>
+    <div class="stat"><div class="n">${totalLines.toLocaleString()}</div><div class="l">linhas totais</div></div>
+    <div class="stat"><div class="n">${top.map(([ext,n])=>`${ext}(${n})`).join(' · ')}</div><div class="l">extensões</div></div>
+  `;
+}
+
+function buildTree(entries) {
+  const dirs = new Set();
+  for (const e of entries) {
+    const parts = e.clean.split('/');
+    for (let i=1;i<parts.length;i++) dirs.add(parts.slice(0,i).join('/'));
+  }
+
+  const lines = [];
+  const extBadge = ext => {
+    const map={js:'js',ts:'js',jsx:'js',tsx:'js',html:'html',htm:'html',css:'css',py:'py',json:'json'};
+    return map[ext]||'';
+  };
+
+  // Construir árvore simples
+  const tree = {};
+  for (const e of entries) {
+    const parts = e.clean.split('/');
+    let node = tree;
+    for (let i=0;i<parts.length-1;i++) {
+      if (!node[parts[i]]) node[parts[i]] = {};
+      node = node[parts[i]];
+    }
+    node[parts[parts.length-1]] = e;
+  }
+
+  function printTree(node, prefix='') {
+    const keys = Object.keys(node).sort((a,b) => {
+      const aIsDir = typeof node[a]==='object'&&!node[a].path;
+      const bIsDir = typeof node[b]==='object'&&!node[b].path;
+      if (aIsDir&&!bIsDir) return -1;
+      if (!aIsDir&&bIsDir) return 1;
+      return a.localeCompare(b);
+    });
+    keys.forEach((k,i) => {
+      const isLast = i===keys.length-1;
+      const conn = isLast?'└─ ':'├─ ';
+      const child = node[k];
+      if (child&&child.path) {
+        const b = extBadge(child.ext);
+        const info = child.content ? ` (${child.lines} linhas)` : '';
+        lines.push(`${prefix}${conn}📄 ${k}${info}`);
+      } else {
+        lines.push(`${prefix}${conn}📁 ${k}/`);
+        printTree(child, prefix+(isLast?'   ':'│  '));
+      }
+    });
+  }
+
+  printTree(tree);
+  document.getElementById('tree-out').textContent = lines.join('\n');
+}
+
+function buildPlano(entries, fileName) {
+  const projectName = fileName.replace('.zip','').replace(/[-_]/g,' ');
+  const byExt = {};
+  let totalLines=0;
+  for(const e of entries){byExt[e.ext]=(byExt[e.ext]||0)+1;if(e.content)totalLines+=e.lines;}
+  const techs = detectTechs(entries);
+  const structure = describeStructure(entries);
+
+  const plano = `# PLANO DO PROJETO — ${projectName.toUpperCase()}
+Gerado em: ${new Date().toLocaleString('pt-BR')}
+
+## VISÃO GERAL
+- Total de arquivos: ${entries.length}
+- Total de linhas de código: ${totalLines.toLocaleString()}
+- Tecnologias detectadas: ${techs.join(', ')||'—'}
+
+## EXTENSÕES
+${Object.entries(byExt).sort((a,b)=>b[1]-a[1]).map(([ext,n])=>`- .${ext}: ${n} arquivo(s)`).join('\n')}
+
+## ESTRUTURA DO PROJETO
+${structure}
+
+## ARQUIVOS PRINCIPAIS
+${getKeyFiles(entries).map(e=>`### ${e.clean}
+- Linhas: ${e.lines}
+- Função provável: ${guessFunction(e)}
+`).join('\n')}
+
+## DEPENDÊNCIAS DETECTADAS
+${getDeps(entries)}
+
+## SCRIPTS DISPONÍVEIS
+${getScripts(entries)}
+
+## COMO RECRIAR
+1. Extraia o ZIP original na pasta desejada
+2. Execute o arquivo criar_estrutura.bat gerado
+3. Rode npm install (se projeto Node.js)
+4. Configure as variáveis de ambiente (.env)
+5. Execute o comando de desenvolvimento
+
+## OBSERVAÇÕES
+${getObservations(entries)}
+`;
+
+  document.getElementById('plano-out').value = plano;
+}
+
+function buildCommands(entries) {
+  const dirs = new Set();
+  for(const e of entries){
+    const parts=e.clean.split('/');
+    for(let i=1;i<parts.length;i++) dirs.add(parts.slice(0,i).join('/'));
+  }
+
+  let cmd = `@echo off\necho Criando estrutura do projeto...\n\n`;
+
+  // Criar pastas
+  const sortedDirs = [...dirs].sort();
+  if (sortedDirs.length) {
+    cmd += `rem === PASTAS ===\n`;
+    for(const d of sortedDirs) cmd += `mkdir "${d.replace(/\//g,'\\')}" 2>nul\n`;
+    cmd += '\n';
+  }
+
+  // Criar arquivos vazios
+  cmd += `rem === ARQUIVOS ===\n`;
+  for(const e of entries){
+    const winPath = e.clean.replace(/\//g,'\\');
+    cmd += `type nul > "${winPath}"\n`;
+  }
+
+  cmd += `\necho Estrutura criada com sucesso!\npause`;
+
+  document.getElementById('cmds-out').textContent = cmd;
+}
+
+function buildFilesContent(entries) {
+  const key = getKeyFiles(entries);
+  let out = '';
+  for (const e of key) {
+    if (!e.content) continue;
+    out += `\n${'═'.repeat(60)}\n`;
+    out += `ARQUIVO: ${e.clean}\n`;
+    out += `LINHAS: ${e.lines} | TAMANHO: ${(e.size/1024).toFixed(1)}KB\n`;
+    out += `${'═'.repeat(60)}\n\n`;
+    out += e.content.slice(0, 3000);
+    if (e.content.length > 3000) out += '\n\n... [truncado — arquivo grande]';
+    out += '\n';
+  }
+  document.getElementById('files-out').value = out.trim();
+}
+
+// ── Helpers de análise ──────────────────────────────────────
+function detectTechs(entries) {
+  const techs = [];
+  const paths = entries.map(e=>e.clean);
+  const hasPkg = entries.find(e=>e.clean.endsWith('package.json'));
+
+  if (paths.some(p=>p.endsWith('vite.config.ts')||p.endsWith('vite.config.js'))) techs.push('Vite');
+  if (paths.some(p=>p.endsWith('next.config.js')||p.endsWith('next.config.ts'))) techs.push('Next.js');
+  if (paths.some(p=>p.includes('tsconfig'))) techs.push('TypeScript');
+  if (paths.some(p=>p.endsWith('.tsx')||p.endsWith('.jsx'))) techs.push('React');
+  if (paths.some(p=>p.endsWith('tailwind.config')||p.includes('tailwindcss'))) techs.push('Tailwind CSS');
+  if (paths.some(p=>p.includes('electron')||p.includes('Electron'))) techs.push('Electron');
+  if (paths.some(p=>p.endsWith('app.json')||p.endsWith('eas.json'))) techs.push('Expo/React Native');
+  if (paths.some(p=>p.endsWith('supabase.ts')||p.includes('supabase'))) techs.push('Supabase');
+  if (paths.some(p=>p.endsWith('.py'))) techs.push('Python');
+  if (paths.some(p=>p.endsWith('drizzle.config.ts')||p.includes('drizzle'))) techs.push('Drizzle ORM');
+  if (paths.some(p=>p.endsWith('server.ts')||p.endsWith('server.js')||p.endsWith('server.cjs'))) techs.push('Node.js/Express');
+  if (hasPkg) { try { const d=JSON.parse(hasPkg.content||'{}'); if(d.dependencies?.['react-native']) techs.push('React Native'); } catch{} }
+  return [...new Set(techs)];
+}
+
+function describeStructure(entries) {
+  const dirs = new Set();
+  for(const e of entries){ const p=e.clean.split('/'); if(p.length>1) dirs.add(p[0]+'/'); }
+  const lines = [];
+  for(const d of [...dirs].sort()) {
+    const count = entries.filter(e=>e.clean.startsWith(d)).length;
+    const desc = {
+      'src/':'Código fonte principal',
+      'app/':'Páginas/rotas (Expo Router / Next.js)',
+      'components/':'Componentes reutilizáveis',
+      'lib/':'Bibliotecas e utilitários',
+      'server/':'Backend / API',
+      'electron/':'Configuração do Electron (desktop)',
+      'public/':'Arquivos públicos estáticos',
+      'assets/':'Imagens e recursos',
+      'dist/':'Build compilado (não editar)',
+      'node_modules/':'Dependências (não editar)',
+    };
+    lines.push(`- **${d}** — ${desc[d]||'pasta do projeto'} (${count} arquivos)`);
+  }
+  return lines.join('\n') || '— Projeto sem subpastas —';
+}
+
+function getKeyFiles(entries) {
+  const IMPORTANT = ['package.json','app.json','eas.json','vite.config.ts','vite.config.js',
+    'index.html','README.md','PLANO.md','.env.example','server.ts','server.js','server.cjs',
+    'drizzle.config.ts','tailwind.config.ts','tsconfig.json','electron/main.js','electron/main.cjs'];
+  const result = [];
+  for (const key of IMPORTANT) {
+    const found = entries.find(e=>e.clean.endsWith(key)||e.clean===key);
+    if (found && found.content) result.push(found);
+  }
+  // Adicionar arquivos maiores que não estão na lista
+  const big = entries.filter(e=>e.content&&e.lines>50&&!result.includes(e)).sort((a,b)=>b.lines-a.lines).slice(0,5);
+  return [...result, ...big];
+}
+
+function guessFunction(e) {
+  const p = e.clean.toLowerCase();
+  if (p.includes('server')) return 'Servidor backend / API';
+  if (p.includes('auth')) return 'Autenticação de usuários';
+  if (p.includes('route')) return 'Definição de rotas';
+  if (p.includes('schema')) return 'Esquema do banco de dados';
+  if (p.includes('config')) return 'Configuração do projeto';
+  if (p.includes('main') && p.includes('electron')) return 'Processo principal do Electron';
+  if (p.endsWith('index.html')) return 'Página HTML principal';
+  if (p.endsWith('package.json')) return 'Dependências e scripts npm';
+  if (p.endsWith('app.json')) return 'Configuração do app (Expo)';
+  if (p.endsWith('eas.json')) return 'Configuração de build (EAS)';
+  if (p.endsWith('tailwind.config.ts')) return 'Configuração do Tailwind CSS';
+  if (p.endsWith('vite.config.ts') || p.endsWith('vite.config.js')) return 'Configuração do bundler Vite';
+  if (p.includes('component')) return 'Componente de interface';
+  if (p.includes('hook')) return 'React hook customizado';
+  if (p.includes('util') || p.includes('helper')) return 'Funções utilitárias';
+  if (p.includes('type')) return 'Definições de tipos TypeScript';
+  if (p.includes('store') || p.includes('state')) return 'Gerenciamento de estado';
+  if (p.includes('db') || p.includes('database')) return 'Configuração do banco de dados';
+  return 'Funcionalidade do projeto';
+}
+
+function getDeps(entries) {
+  const pkg = entries.find(e=>e.clean.endsWith('package.json')&&!e.clean.includes('node_modules'));
+  if (!pkg?.content) return '— package.json não encontrado —';
+  try {
+    const d = JSON.parse(pkg.content);
+    const deps = Object.keys(d.dependencies||{}).slice(0,15).join(', ');
+    const dev  = Object.keys(d.devDependencies||{}).slice(0,10).join(', ');
+    return `**Dependências:** ${deps||'nenhuma'}\n**Dev:** ${dev||'nenhuma'}`;
+  } catch { return '— Erro ao ler package.json —'; }
+}
+
+function getScripts(entries) {
+  const pkg = entries.find(e=>e.clean.endsWith('package.json')&&!e.clean.includes('node_modules'));
+  if (!pkg?.content) return '— package.json não encontrado —';
+  try {
+    const d = JSON.parse(pkg.content);
+    const scripts = Object.entries(d.scripts||{});
+    return scripts.map(([k,v])=>`- \`npm run ${k}\` → ${v}`).join('\n')||'— nenhum script —';
+  } catch { return '— Erro ao ler package.json —'; }
+}
+
+function getObservations(entries) {
+  const obs = [];
+  if (entries.some(e=>e.clean.includes('.replit')||e.content?.includes('replit'))) obs.push('⚠️ Contém referências à Replit — pode ter dependências do ambiente deles.');
+  if (entries.some(e=>e.clean.endsWith('pnpm-workspace.yaml'))) obs.push('⚠️ Usa pnpm workspace — pode ter catalog: que não funciona com npm.');
+  if (entries.some(e=>e.clean.endsWith('.env'))) obs.push('ℹ️ Tem arquivo .env — configure as variáveis de ambiente antes de rodar.');
+  if (entries.some(e=>e.clean.includes('electron'))) obs.push('ℹ️ Projeto Electron — pode ser empacotado como .exe com electron-builder.');
+  if (entries.some(e=>e.clean.endsWith('eas.json'))) obs.push('ℹ️ Projeto Expo — gere APK com: eas build --profile preview --platform android');
+  if (!obs.length) obs.push('Nenhuma observação especial.');
+  return obs.join('\n');
+}
+
+// ── Utilitários ──────────────────────────────────────────────
+function copyEl(id) {
+  const el = document.getElementById(id);
+  const txt = el.tagName==='TEXTAREA'||el.tagName==='INPUT' ? el.value : el.textContent;
+  navigator.clipboard.writeText(txt).then(()=>showToast('✅ Copiado!'));
+}
+
+function downloadEl(id, filename) {
+  const el = document.getElementById(id);
+  const txt = el.tagName==='TEXTAREA'||el.tagName==='INPUT' ? el.value : el.textContent;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  a.download = filename; a.click();
+}
+
+function showToast(msg) {
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:20px;right:20px;padding:8px 16px;border-radius:6px;font-size:13px;color:#fff;background:#238636;z-index:99;';document.body.appendChild(t);}
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2500);
+}
+</script>
+</body>
+</html>
+<script>
+// Adicionar botão de pesquisa npm e comandos detalhados
+document.addEventListener('DOMContentLoaded', () => {
+  // Será injetado após análise
+});
+
+window.searchNpm = async (pkg) => {
+  try {
+    const r = await fetch(`https://registry.npmjs.org/${pkg}/latest`);
+    const d = await r.json();
+    return d.version || 'latest';
+  } catch { return 'latest'; }
+};
+</script>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IARA Suite — Importador & Editor Completo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #e2e8f0; }
+        
+        .container { display: flex; height: 100vh; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: #1e293b; border-right: 1px solid #334155; overflow-y: auto; padding: 16px; }
+        .sidebar h3 { font-size: 14px; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; }
+        .file-tree { list-style: none; }
+        .file-item { padding: 8px; margin: 4px 0; background: #0f172a; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all .2s; }
+        .file-item:hover { background: #334155; color: #60a5fa; }
+        .file-item.active { background: #3b82f6; color: #fff; }
+        
+        /* MAIN EDITOR */
+        .main { flex: 1; display: flex; flex-direction: column; }
+        
+        /* TOOLBAR */
+        .toolbar { background: #1e293b; border-bottom: 1px solid #334155; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .btn { padding: 8px 14px; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all .2s; }
+        .btn:hover { background: #2563eb; }
+        .btn.secondary { background: #475569; }
+        .btn.secondary:hover { background: #64748b; }
+        .btn.danger { background: #ef4444; }
+        .btn.danger:hover { background: #dc2626; }
+        
+        select { padding: 6px 10px; background: #334155; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 12px; }
+        input[type="file"] { display: none; }
+        
+        /* SEARCH BAR */
+        .search-container { display: flex; gap: 8px; flex: 1; }
+        .search-input { flex: 1; padding: 8px 12px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: #e2e8f0; font-size: 12px; }
+        .search-input::placeholder { color: #64748b; }
+        .search-count { padding: 8px 12px; background: #334155; border-radius: 4px; font-size: 11px; color: #94a3b8; }
+        
+        /* EDITOR AREA */
+        .editor-wrapper { flex: 1; display: flex; }
+        .line-numbers { background: #0f172a; border-right: 1px solid #334155; padding: 12px 8px; color: #64748b; font-size: 12px; font-family: 'Courier New', monospace; line-height: 1.6; overflow: hidden; user-select: none; width: 50px; }
+        .editor-content { flex: 1; padding: 12px; overflow: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+        
+        textarea { width: 100%; height: 100%; background: #0f172a; color: #e2e8f0; border: none; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; padding: 12px; resize: none; outline: none; }
+        
+        .highlight { background: #fbbf24; color: #000; font-weight: bold; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1e293b; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; }
+        .modal-content h2 { margin-bottom: 16px; color: #60a5fa; }
+        .modal-content p { margin-bottom: 12px; font-size: 13px; color: #cbd5e1; }
+        .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+        .modal-buttons button { flex: 1; }
+        
+        /* TOAST */
+        #toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; background: #10b981; color: #fff; border-radius: 4px; font-size: 12px; z-index: 2000; opacity: 0; transition: opacity .3s; }
+        #toast.show { opacity: 1; }
+        #toast.error { background: #ef4444; }
+        #toast.warn { background: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <h3>📁 Arquivos</h3>
+            <ul class="file-tree" id="fileTree"></ul>
+        </div>
+        
+        <!-- MAIN EDITOR -->
+        <div class="main">
+            <!-- TOOLBAR -->
+            <div class="toolbar">
+                <button class="btn" onclick="triggerFileUpload()">📤 Importar ZIP</button>
+                <button class="btn secondary" onclick="exportFile()">💾 Exportar</button>
+                
+                <select id="encodingSelect" onchange="changeEncoding()">
+                    <option value="utf-8">UTF-8</option>
+                    <option value="iso-8859-1">ISO-8859-1 (Latin-1)</option>
+                    <option value="windows-1252">Windows-1252</option>
+                    <option value="utf-16">UTF-16</option>
+                </select>
+                
+                <div class="search-container">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Buscar no código..." onkeyup="searchInCode()">
+                    <span class="search-count" id="searchCount">0/0</span>
+                </div>
+                
+                <button class="btn danger" onclick="clearAll()">🗑️ Limpar</button>
+            </div>
+            
+            <!-- EDITOR -->
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="lineNumbers"></div>
+                <textarea id="codeEditor" placeholder="Seu código aparecerá aqui..."></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Aviso</h2>
+            <p id="modalText"></p>
+            <div class="modal-buttons">
+                <button class="btn" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TOAST -->
+    <div id="toast"></div>
+    
+    <!-- INPUT FILE HIDDEN -->
+    <input type="file" id="fileInput" accept=".zip" onchange="handleZipUpload(event)">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // ═══════════════════════════════════════
+        // IARA SUITE — EDITOR COMPLETO
+        // Dr. Maikon Caldeira OAB/MG 183712
+        // ═══════════════════════════════════════
+        
+        let files = {};
+        let currentFile = null;
+        let searchMatches = [];
+        let currentMatchIndex = 0;
+        
+        // TOAST
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `show ${type === 'error' ? 'error' : type === 'warn' ? 'warn' : ''}`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // MODAL
+        function showModal(title, text) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalText').textContent = text;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        // FILE UPLOAD
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+        
+        // ZIP HANDLER
+        async function handleZipUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const zip = new JSZip();
+                const contents = await zip.loadAsync(file);
+                files = {};
+                
+                for (const [path, zipFile] of Object.entries(contents.files)) {
+                    if (!zipFile.dir) {
+                        const text = await zipFile.async('text');
+                        files[path] = text;
+                    }
+                }
+                
+                renderFileTree();
+                showToast(`✅ ${Object.keys(files).length} arquivo(s) importado(s)!`);
+            } catch (err) {
+                showToast(`❌ Erro ao importar ZIP: ${err.message}`, 'error');
+            }
+        }
+        
+        // RENDER FILE TREE
+        function renderFileTree() {
+            const tree = document.getElementById('fileTree');
+            tree.innerHTML = '';
+            
+            Object.keys(files).forEach(path => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.textContent = path.split('/').pop();
+                li.onclick = () => openFile(path);
+                tree.appendChild(li);
+            });
+        }
+        
+        // OPEN FILE
+        function openFile(path) {
+            currentFile = path;
+            const content = files[path];
+            document.getElementById('codeEditor').value = content;
+            updateLineNumbers();
+            updateFileTreeSelection();
+            searchMatches = [];
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchCount').textContent = '0/0';
+        }
+        
+        // UPDATE LINE NUMBERS
+        function updateLineNumbers() {
+            const editor = document.getElementById('codeEditor');
+            const lines = editor.value.split('\n').length;
+            const lineNumbers = document.getElementById('lineNumbers');
+            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('\n');
+        }
+        
+        // UPDATE FILE TREE SELECTION
+        function updateFileTreeSelection() {
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.textContent === currentFile?.split('/').pop()) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        // SEARCH IN CODE
+        function searchInCode() {
+            const query = document.getElementById('searchInput').value;
+            const editor = document.getElementById('codeEditor');
+            const content = editor.value;
+            
+            if (!query) {
+                searchMatches = [];
+                document.getElementById('searchCount').textContent = '0/0';
+                return;
+            }
+            
+            searchMatches = [];
+            let index = 0;
+            while ((index = content.indexOf(query, index)) !== -1) {
+                searchMatches.push(index);
+                index += query.length;
+            }
+            
+            document.getElementById('searchCount').textContent = `${searchMatches.length}`;
+            
+            if (searchMatches.length > 0) {
+                highlightMatch(0);
+            }
+        }
+        
+        // HIGHLIGHT MATCH
+        function highlightMatch(index) {
+            const query = document.getElementById('searchInput').value;
+            const editor = document.getElementById('codeEditor');
+            const content = editor.value;
+            
+            if (searchMatches.length === 0) return;
+            
+            const matchPos = searchMatches[index];
+            editor.focus();
+            editor.setSelectionRange(matchPos, matchPos + query.length);
+            
+            // Scroll to match
+            const lines = content.substring(0, matchPos).split('\n').length - 1;
+            const lineHeight = parseInt(window.getComputedStyle(editor).lineHeight);
+            editor.scrollTop = lines * lineHeight - editor.clientHeight / 2;
+        }
+        
+        // CHANGE ENCODING
+        function changeEncoding() {
+            if (!currentFile) {
+                showToast('⚠️ Nenhum arquivo aberto', 'warn');
+                return;
+            }
+            showToast('✅ Encoding alterado (simulado)', 'warn');
+        }
+        
+        // EXPORT FILE
+        function exportFile() {
+            if (!currentFile) {
+                showToast('⚠️ Nenhum arquivo para exportar', 'warn');
+                return;
+            }
+            
+            const content = document.getElementById('codeEditor').value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFile.split('/').pop();
+            a.click();
+            showToast('✅ Arquivo exportado!');
+        }
+        
+        // CLEAR ALL
+        function clearAll() {
+            if (confirm('⚠️ Tem certeza que quer limpar tudo?')) {
+                files = {};
+                currentFile = null;
+                document.getElementById('codeEditor').value = '';
+                document.getElementById('fileTree').innerHTML = '';
+                document.getElementById('lineNumbers').innerHTML = '';
+                showToast('🗑️ Tudo limpo!');
+            }
+        }
+        
+        // SYNC EDITOR WITH LINE NUMBERS
+        document.getElementById('codeEditor').addEventListener('input', updateLineNumbers);
+        document.getElementById('codeEditor').addEventListener('scroll', () => {
+            document.getElementById('lineNumbers').scrollTop = document.getElementById('codeEditor').scrollTop;
+        });
+    </script>
+</body>
+</html>

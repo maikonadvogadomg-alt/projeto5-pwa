@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SK-Code Analyzer — Mapear Dependências</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0e27;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: 320px;
+      background: #0f1419;
+      border-right: 1px solid #1e2139;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #1e2139;
+      background: #0a0e27;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .upload-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 10px 12px;
+      background: #1f6feb;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: #388bfd;
+    }
+
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid #1e2139;
+      color: #8b949e;
+    }
+
+    .btn.secondary:hover {
+      background: #161b22;
+      border-color: #3b82f6;
+      color: #58a6ff;
+    }
+
+    .btn.danger {
+      background: #da3633;
+    }
+
+    .btn.danger:hover {
+      background: #f85149;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 6px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 8px 10px;
+      background: #0a0e27;
+      border: 1px solid #1e2139;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 12px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      background: #0a0e27;
+      border: 1px solid #1e2139;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #c9d1d9;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .file-item:hover {
+      background: #161b22;
+      border-color: #3b82f6;
+    }
+
+    .file-item.active {
+      background: #1f6feb;
+      border-color: #1f6feb;
+      color: white;
+    }
+
+    .file-icon {
+      font-size: 14px;
+    }
+
+    .file-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-deps {
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* ═══ MAIN ═══ */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0a0e27;
+    }
+
+    .header {
+      padding: 16px;
+      background: #0f1419;
+      border-bottom: 1px solid #1e2139;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #c9d1d9;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .content {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    /* ═══ GRAPH SECTION ═══ */
+    .graph-section {
+      flex: 1;
+      background: #0f1419;
+      border: 1px solid #1e2139;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .graph-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .graph-canvas {
+      flex: 1;
+      background: #0a0e27;
+      border: 1px solid #1e2139;
+      border-radius: 6px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .graph-node {
+      position: absolute;
+      padding: 8px 12px;
+      background: #161b22;
+      border: 1px solid #1e2139;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #c9d1d9;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .graph-node:hover {
+      background: #1f6feb;
+      border-color: #1f6feb;
+      color: white;
+    }
+
+    .graph-node.active {
+      background: #1f6feb;
+      border-color: #1f6feb;
+      color: white;
+      box-shadow: 0 0 0 3px rgba(31, 110, 251, 0.2);
+    }
+
+    svg.graph-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    /* ═══ DETAILS SECTION ═══ */
+    .details-section {
+      width: 320px;
+      background: #0f1419;
+      border: 1px solid #1e2139;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .details-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .details-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .detail-block {
+      background: #0a0e27;
+      border: 1px solid #1e2139;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .detail-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-item {
+      font-size: 11px;
+      color: #c9d1d9;
+      padding: 4px 6px;
+      background: #161b22;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .detail-item:hover {
+      background: #1f6feb;
+      color: white;
+    }
+
+    .detail-code {
+      font-size: 10px;
+      font-family: "Monaco", "Courier New", monospace;
+      color: #8cba89;
+      background: #0d0d0d;
+      border: 1px solid #1e2139;
+      border-radius: 4px;
+      padding: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .btn-download {
+      padding: 8px 10px;
+      background: #238636;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-download:hover {
+      background: #2ea043;
+    }
+
+    /* ═══ SCROLLBAR ═══ */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #1e2139;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #30363d;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #6e7681;
+      font-size: 13px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .stats {
+      font-size: 10px;
+      color: #6e7681;
+      padding: 8px;
+      background: #0a0e27;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">📁 Arquivos</div>
+        <div class="upload-area">
+          <button class="btn" onclick="document.getElementById('fileInput').click()">
+            📤 Importar ZIP
+          </button>
+          <button class="btn secondary" onclick="openPasteModal()">
+            📋 Colar Código
+          </button>
+          <button class="btn danger" onclick="clearAll()">
+            🗑️ Limpar
+          </button>
+        </div>
+        <input type="file" id="fileInput" accept=".zip" onchange="handleZipUpload(event)">
+      </div>
+
+      <div style="padding: 12px; border-bottom: 1px solid #1e2139;">
+        <div class="search-box">
+          <input
+            type="text"
+            class="search-input"
+            id="searchInput"
+            placeholder="Buscar arquivo..."
+            onkeyup="filterFiles()"
+          />
+        </div>
+        <div class="stats" id="stats">0 arquivos</div>
+      </div>
+
+      <div class="sidebar-content" id="filesList"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="header">
+        <div class="header-title" id="headerTitle">🔍 Code Analyzer</div>
+        <div class="header-actions">
+          <button class="btn secondary" onclick="exportAnalysis()">📥 Exportar</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- GRAPH -->
+        <div class="graph-section">
+          <div class="graph-title">🗺️ Mapa de Dependências</div>
+          <div class="graph-canvas" id="graphCanvas">
+            <div class="empty-state">Importe um arquivo para começar</div>
+          </div>
+        </div>
+
+        <!-- DETAILS -->
+        <div class="details-section">
+          <div class="details-title">📊 Detalhes</div>
+          <div class="details-content" id="detailsContent">
+            <div class="empty-state" style="height: auto; padding: 20px;">
+              Selecione um arquivo para ver detalhes
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PASTE CODE -->
+  <div id="pasteModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100;">
+    <div style="background: #0f1419; border: 1px solid #1e2139; border-radius: 8px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+      <div style="font-size: 14px; font-weight: 600; color: #c9d1d9; margin-bottom: 12px;">📋 Colar Código</div>
+      <textarea id="pasteInput" style="width: 100%; height: 300px; padding: 10px; background: #0a0e27; border: 1px solid #1e2139; border-radius: 6px; color: #c9d1d9; font-family: monospace; font-size: 12px;" placeholder="Cole seu código aqui..."></textarea>
+      <div style="display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end;">
+        <button class="btn secondary" onclick="closePasteModal()">Cancelar</button>
+        <button class="btn" onclick="handlePasteCode()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <script>
+    let files = {};
+    let selectedFile = null;
+    let dependencies = {};
+
+    // ═══════════════════════════════════════════════════════════════
+    // UTILS
+    // ═══════════════════════════════════════════════════════════════
+
+    function extractImports(code) {
+      const imports = [];
+      const patterns = [
+        /import\s+(?:{[^}]*}|[\w\s,]*)\s+from\s+['"]([^'"]+)['"]/g,
+        /require\(['"]([^'"]+)['"]\)/g,
+        /import\(['"]([^'"]+)['"]\)/g,
+      ];
+
+      patterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(code)) !== null) {
+          imports.push(match[1]);
+        }
+      });
+
+      return [...new Set(imports)];
+    }
+
+    function getFileExtension(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      const icons = {
+        'ts': '📘', 'tsx': '⚛️', 'js': '📙', 'jsx': '⚛️',
+        'json': '📋', 'css': '🎨', 'html': '🌐',
+        'md': '📄', 'txt': '📝', 'py': '🐍', 'java': '☕'
+      };
+      return icons[ext] || '📄';
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FILE HANDLING
+    // ═══════════════════════════════════════════════════════════════
+
+    async function handleZipUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const zip = new JSZip();
+        const loaded = await zip.loadAsync(file);
+        files = {};
+        dependencies = {};
+
+        for (const [path, zipFile] of Object.entries(loaded.files)) {
+          if (!zipFile.dir) {
+            const content = await zipFile.async("text");
+            const filename = path.split('/').pop();
+            files[filename] = {
+              path,
+              content,
+              imports: extractImports(content)
+            };
+          }
+        }
+
+        buildDependencyGraph();
+        renderFilesList();
+        renderGraph();
+      } catch (e) {
+        alert("❌ Erro ao ler ZIP: " + e.message);
+      }
+    }
+
+    function handlePasteCode() {
+      const code = document.getElementById("pasteInput").value;
+      if (!code.trim()) {
+        alert("Cole algum código!");
+        return;
+      }
+
+      const filename = `pasted-${Date.now()}.js`;
+      files[filename] = {
+        path: filename,
+        content: code,
+        imports: extractImports(code)
+      };
+
+      buildDependencyGraph();
+      renderFilesList();
+      renderGraph();
+      closePasteModal();
+      document.getElementById("pasteInput").value = "";
+    }
+
+    function buildDependencyGraph() {
+      dependencies = {};
+      Object.keys(files).forEach(file => {
+        dependencies[file] = [];
+        files[file].imports.forEach(imp => {
+          Object.keys(files).forEach(f => {
+            if (f !== file && (imp.includes(f.split('.')[0]) || f.includes(imp.split('/')[0]))) {
+              dependencies[file].push(f);
+            }
+          });
+        });
+      });
+    }
+
+    function filterFiles() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const items = document.querySelectorAll(".file-item");
+      items.forEach(item => {
+        const name = item.textContent.toLowerCase();
+        item.style.display = name.includes(search) ? "flex" : "none";
+      });
+    }
+
+    function renderFilesList() {
+      const list = document.getElementById("filesList");
+      const files_array = Object.keys(files).sort();
+
+      list.innerHTML = files_array.map(filename => `
+        <div class="file-item ${selectedFile === filename ? 'active' : ''}" onclick="selectFile('${filename}')">
+          <span class="file-icon">${getFileExtension(filename)}</span>
+          <span class="file-name">${filename}</span>
+          <span class="file-deps">${dependencies[filename]?.length || 0}</span>
+        </div>
+      `).join("");
+
+      document.getElementById("stats").textContent = `${files_array.length} arquivo${files_array.length !== 1 ? 's' : ''}`;
+    }
+
+    function selectFile(filename) {
+      selectedFile = filename;
+      renderFilesList();
+      renderDetails();
+      highlightInGraph(filename);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GRAPH RENDERING
+    // ═══════════════════════════════════════════════════════════════
+
+    function renderGraph() {
+      const canvas = document.getElementById("graphCanvas");
+      const files_array = Object.keys(files);
+
+      if (files_array.length === 0) {
+        canvas.innerHTML = '<div class="empty-state">Importe um arquivo para começar</div>';
+        return;
+      }
+
+      canvas.innerHTML = '<svg class="graph-svg" style="width: 100%; height: 100%;"></svg>';
+      const svg = canvas.querySelector("svg");
+      const nodeSize = 120;
+      const padding = 40;
+
+      // Calcular posições em grid
+      const cols = Math.ceil(Math.sqrt(files_array.length));
+      const positions = {};
+
+      files_array.forEach((file, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        positions[file] = {
+          x: col * nodeSize + padding,
+          y: row * nodeSize + padding
+        };
+      });
+
+      // Desenhar linhas de dependência
+      Object.keys(dependencies).forEach(file => {
+        dependencies[file].forEach(dep => {
+          const from = positions[file];
+          const to = positions[dep];
+          if (from && to) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", from.x + 60);
+            line.setAttribute("y1", from.y + 15);
+            line.setAttribute("x2", to.x + 60);
+            line.setAttribute("y2", to.y + 15);
+            line.setAttribute("stroke", "#1e2139");
+            line.setAttribute("stroke-width", "1");
+            svg.appendChild(line);
+          }
+        });
+      });
+
+      // Desenhar nós
+      files_array.forEach(file => {
+        const pos = positions[file];
+        const node = document.createElement("div");
+        node.className = `graph-node ${selectedFile === file ? 'active' : ''}`;
+        node.style.left = pos.x + "px";
+        node.style.top = pos.y + "px";
+        node.textContent = file.split('.')[0];
+        node.onclick = () => selectFile(file);
+        canvas.appendChild(node);
+      });
+
+      // Ajustar tamanho do canvas
+      const maxX = Math.max(...Object.values(positions).map(p => p.x)) + nodeSize;
+      const maxY = Math.max(...Object.values(positions).map(p => p.y)) + nodeSize;
+      svg.setAttribute("width", maxX);
+      svg.setAttribute("height", maxY);
+      canvas.style.minHeight = maxY + "px";
+    }
+
+    function highlightInGraph(filename) {
+      document.querySelectorAll(".graph-node").forEach(node => {
+        node.classList.remove("active");
+        if (node.textContent.includes(filename.split('.')[0])) {
+          node.classList.add("active");
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DETAILS PANEL
+    // ═══════════════════════════════════════════════════════════════
+
+    function renderDetails() {
+      const details = document.getElementById("detailsContent");
+
+      if (!selectedFile || !files[selectedFile]) {
+        details.innerHTML = '<div class="empty-state" style="height: auto; padding: 20px;">Selecione um arquivo</div>';
+        return;
+      }
+
+      const file = files[selectedFile];
+      const deps = dependencies[selectedFile] || [];
+      const dependents = Object.keys(dependencies).filter(f => dependencies[f].includes(selectedFile));
+
+      details.innerHTML = `
+        <div class="detail-block">
+          <div class="detail-label">📄 Arquivo</div>
+          <div style="font-size: 12px; color: #c9d1d9; word-break: break-word;">${selectedFile}</div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-label">📦 Importações (${file.imports.length})</div>
+          <div class="detail-list">
+            ${file.imports.length > 0 ? file.imports.map(imp => `
+              <div class="detail-item">→ ${imp}</div>
+            `).join("") : '<div style="font-size: 11px; color: #6e7681;">Nenhuma importação</div>'}
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-label">🔗 Depende de (${deps.length})</div>
+          <div class="detail-list">
+            ${deps.length > 0 ? deps.map(dep => `
+              <div class="detail-item" onclick="selectFile('${dep}')" style="cursor: pointer;">⬇️ ${dep}</div>
+            `).join("") : '<div style="font-size: 11px; color: #6e7681;">Nenhuma dependência</div>'}
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-label">🔄 Usado por (${dependents.length})</div>
+          <div class="detail-list">
+            ${dependents.length > 0 ? dependents.map(dep => `
+              <div class="detail-item" onclick="selectFile('${dep}')" style="cursor: pointer;">⬆️ ${dep}</div>
+            `).join("") : '<div style="font-size: 11px; color: #6e7681;">Nenhum dependente</div>'}
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-label">📝 Preview</div>
+          <div class="detail-code">${file.content.slice(0, 300)}${file.content.length > 300 ? '...' : ''}</div>
+        </div>
+
+        <button class="btn-download" onclick="downloadFile('${selectedFile}')" style="width: 100%;">
+          💾 Baixar Arquivo
+        </button>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DOWNLOAD
+    // ═══════════════════════════════════════════════════════════════
+
+    function downloadFile(filename) {
+      const file = files[filename];
+      const blob = new Blob([file.content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+    }
+
+    function exportAnalysis() {
+      const analysis = {
+        files: Object.keys(files),
+        dependencies,
+        timestamp: new Date().toLocaleString("pt-BR")
+      };
+
+      const blob = new Blob([JSON.stringify(analysis, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analysis-${Date.now()}.json`;
+      a.click();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MODAL
+    // ═══════════════════════════════════════════════════════════════
+
+    function openPasteModal() {
+      document.getElementById("pasteModal").style.display = "flex";
+    }
+
+    function closePasteModal() {
+      document.getElementById("pasteModal").style.display = "none";
+    }
+
+    function clearAll() {
+      if (!confirm("Limpar todos os arquivos?")) return;
+      files = {};
+      dependencies = {};
+      selectedFile = null;
+      document.getElementById("graphCanvas").innerHTML = '<div class="empty-state">Importe um arquivo para começar</div>';
+      document.getElementById("filesList").innerHTML = "";
+      document.getElementById("detailsContent").innerHTML = '<div class="empty-state" style="height: auto; padding: 20px;">Selecione um arquivo</div>';
+      document.getElementById("stats").textContent = "0 arquivos";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+{
+  "name": "Maikon Caldeira - Advocacia Digital",
+  "short_name": "MC Advocacia",
+  "description": "Sistema completo de ferramentas jurídicas e produtividade",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0a",
+  "theme_color": "#5d5e53",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Playground",
+      "short_name": "Playground",
+      "description": "Crie e exporte scripts",
+      "url": "./1.codigo.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Filtrador",
+      "short_name": "Filtrador",
+      "description": "Limpeza de processos",
+      "url": "./2.codigo.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Chat IA",
+      "short_name": "Chat IA",
+      "description": "Assistente inteligente",
+      "url": "./3.codigo.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Cirurgião",
+      "short_name": "Cirurgião",
+      "description": "Análise de projetos",
+      "url": "./4.codigo.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "1.html",
+      "short_name": "1.html",
+      "description": "Novo app",
+      "url": "./5.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "6.html",
+      "short_name": "6.html",
+      "description": "Novo app",
+      "url": "./6.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "7.html",
+      "short_name": "7.html",
+      "description": "Novo app",
+      "url": "./7.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "3.html",
+      "short_name": "3.html",
+      "description": "Novo app",
+      "url": "./8.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "2.html",
+      "short_name": "2.html",
+      "description": "Novo app",
+      "url": "./9.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "1.html",
+      "short_name": "1.html",
+      "description": "Novo app",
+      "url": "./10.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "2.html",
+      "short_name": "2.html",
+      "description": "Novo app",
+      "url": "./11.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "3.html",
+      "short_name": "3.html",
+      "description": "Novo app",
+      "url": "./12.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}

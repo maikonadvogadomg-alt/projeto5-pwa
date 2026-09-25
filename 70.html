@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Replicador de Projeto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0d1117;color:#e6edf3;font-family:system-ui,sans-serif;padding:16px;}
+h1{color:#58a6ff;font-size:18px;margin-bottom:4px;}
+.sub{color:#8b949e;font-size:13px;margin-bottom:20px;}
+.drop{border:2px dashed #30363d;border-radius:8px;padding:36px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;}
+.drop:hover,.drop.over{border-color:#58a6ff;background:#0d1f40;}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;margin-bottom:14px;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #30363d;}
+.card-hdr h3{font-size:13px;font-weight:600;}
+.card-body{padding:12px 14px;}
+.btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;cursor:pointer;}
+.btn-blue{background:#1f6feb;color:#fff;}
+.btn-green{background:#238636;color:#fff;}
+.btn-gray{background:#21262d;color:#e6edf3;border:1px solid #30363d;}
+.btn:hover{opacity:.85;}
+pre,textarea.out{background:#0a0e14;border-radius:6px;padding:12px;font-size:12px;font-family:'Courier New',monospace;white-space:pre-wrap;color:#e6edf3;line-height:1.6;border:1px solid #30363d;}
+textarea.out{width:100%;resize:vertical;outline:none;}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;}
+.tag-dep{background:#1f2a1f;color:#3fb950;}
+.tag-dev{background:#1f1f2a;color:#58a6ff;}
+.tag-peer{background:#2a1f1f;color:#f85149;}
+.dep-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #21262d;font-size:12px;}
+.dep-name{font-family:monospace;color:#58a6ff;min-width:180px;}
+.dep-ver{color:#3fb950;min-width:60px;}
+.dep-desc{color:#8b949e;flex:1;}
+.dep-type{font-size:10px;padding:2px 6px;border-radius:4px;}
+.loading{display:inline-block;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.section-cmd{margin-bottom:10px;}
+.section-cmd h4{font-size:12px;color:#d29922;margin-bottom:5px;}
+.cmd-line{display:flex;align-items:center;gap:8px;background:#0a0e14;border-radius:5px;padding:7px 10px;margin-bottom:4px;font-family:monospace;font-size:12px;}
+.cmd-line code{flex:1;color:#3fb950;}
+.cmd-copy{background:none;border:none;color:#8b949e;cursor:pointer;font-size:11px;flex-shrink:0;}
+.cmd-copy:hover{color:#e6edf3;}
+#result{display:none;}
+#npm-status{font-size:11px;color:#8b949e;padding:4px 0;}
+</style>
+</head>
+<body>
+
+<h1>⚡ Replicador de Projeto</h1>
+<p class="sub">Importe um ZIP → analisa dependências no npm → gera comandos para recriar do zero.</p>
+
+<div class="drop" id="drop" onclick="document.getElementById('zip-in').click()">
+  <div style="font-size:36px;margin-bottom:8px;">📦</div>
+  <h2 style="font-size:14px;font-weight:600;margin-bottom:4px;">Clique ou arraste o ZIP aqui</h2>
+  <p style="font-size:12px;color:#8b949e;">Analisa package.json, detecta dependências e gera comandos</p>
+</div>
+<input type="file" id="zip-in" accept=".zip" style="display:none" onchange="run(this)">
+
+<div id="result">
+
+<!-- Detecção do projeto -->
+<div class="card">
+  <div class="card-hdr"><h3>🔍 Tipo de Projeto Detectado</h3></div>
+  <div class="card-body" id="project-type"></div>
+</div>
+
+<!-- Dependências com versões do npm -->
+<div class="card">
+  <div class="card-hdr">
+    <h3>📦 Dependências</h3>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span id="npm-status"></span>
+      <button class="btn btn-blue" onclick="searchAllNpm()">🔍 Buscar versões no npm</button>
+    </div>
+  </div>
+  <div class="card-body" id="deps-list"></div>
+</div>
+
+<!-- package.json gerado -->
+<div class="card">
+  <div class="card-hdr">
+    <h3>📋 package.json gerado</h3>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-gray" onclick="copyText('pkg-out')">📋 Copiar</button>
+      <button class="btn btn-green" onclick="downloadText('pkg-out','package.json')">⬇ Baixar</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <textarea class="out" id="pkg-out" style="height:300px;"></textarea>
+  </div>
+</div>
+
+<!-- Comandos por seção -->
+<div class="card">
+  <div class="card-hdr">
+    <h3>💻 Comandos para recriar o projeto</h3>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-gray" onclick="copyText('cmds-out')">📋 Copiar tudo</button>
+      <button class="btn btn-green" onclick="downloadText('cmds-out','comandos.bat')">⬇ .bat Windows</button>
+    </div>
+  </div>
+  <div class="card-body" id="cmds-section">
+    <textarea class="out" id="cmds-out" style="height:320px;"></textarea>
+  </div>
+</div>
+
+<!-- Estrutura de pastas -->
+<div class="card">
+  <div class="card-hdr">
+    <h3>🌳 Estrutura de Pastas</h3>
+    <button class="btn btn-gray" onclick="copyText('tree-out')">📋 Copiar</button>
+  </div>
+  <div class="card-body">
+    <pre id="tree-out"></pre>
+  </div>
+</div>
+
+</div><!-- /result -->
+
+<div id="toast" style="display:none;position:fixed;bottom:20px;right:20px;padding:8px 16px;border-radius:6px;font-size:13px;color:#fff;background:#238636;z-index:99;"></div>
+
+<script>
+// ── Drag and drop ────────────────────────────────────
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e=>{e.preventDefault();drop.classList.add('over');});
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{e.preventDefault();drop.classList.remove('over');if(e.dataTransfer.files[0])analyze(e.dataTransfer.files[0]);});
+
+async function run(input) { if(input.files[0]) analyze(input.files[0]); }
+
+// ── Estado global ────────────────────────────────────
+let PROJECT = { name:'meu-projeto', deps:{}, devDeps:{}, scripts:{}, techs:[], type:'', files:[], dirs:[] };
+
+// ── Análise principal ────────────────────────────────
+async function analyze(file) {
+  drop.innerHTML = '<div style="font-size:28px">⏳</div><p style="font-size:13px;margin-top:8px;">Analisando...</p>';
+
+  const zip = await JSZip.loadAsync(file);
+  const files = [];
+  const TEXT = new Set(['html','css','js','ts','tsx','jsx','json','md','txt','py','sh','bat','yaml','yml','env','toml','cjs','mjs']);
+
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    const ext = (name.split('.').pop()||'').toLowerCase();
+    let content = null;
+    if (TEXT.has(ext)) { try { content = await entry.async('text'); } catch{} }
+    files.push({ path: name, ext, content });
+  }
+
+  // Detectar raiz
+  const root = detectRoot(files.map(f=>f.path));
+  PROJECT.files = files.map(f=>({...f, clean: root?f.path.slice(root.length):f.path})).filter(f=>f.clean);
+
+  // Extrair dirs
+  const dirs = new Set();
+  for (const f of PROJECT.files) {
+    const parts = f.clean.split('/');
+    for (let i=1;i<parts.length;i++) dirs.add(parts.slice(0,i).join('/'));
+  }
+  PROJECT.dirs = [...dirs].sort();
+
+  // Ler package.json
+  const pkg = PROJECT.files.find(f=>f.clean==='package.json'||f.clean.endsWith('/package.json')&&!f.clean.includes('node_modules'));
+  if (pkg?.content) {
+    try {
+      const d = JSON.parse(pkg.content);
+      PROJECT.name = d.name || file.name.replace('.zip','').replace(/[-_]/g,' ').trim();
+      PROJECT.deps    = d.dependencies    || {};
+      PROJECT.devDeps = d.devDependencies || {};
+      PROJECT.scripts = d.scripts         || {};
+    } catch{}
+  }
+
+  // Detectar tecnologias
+  PROJECT.techs = detectTechs();
+  PROJECT.type  = detectType();
+
+  // Renderizar
+  renderProjectType();
+  renderDeps();
+  renderPackageJson();
+  renderCommands();
+  renderTree();
+
+  document.getElementById('result').style.display = 'block';
+  drop.innerHTML = `<div style="font-size:24px">✅</div><p style="font-size:13px;margin-top:6px;">${file.name} — ${PROJECT.files.length} arquivos analisados</p>`;
+}
+
+// ── Detectar raiz ────────────────────────────────────
+function detectRoot(paths) {
+  if (!paths.length) return '';
+  const first = paths[0].split('/')[0];
+  return paths.every(p=>p.startsWith(first+'/')) ? first+'/' : '';
+}
+
+// ── Detectar tecnologias ─────────────────────────────
+function detectTechs() {
+  const paths = PROJECT.files.map(f=>f.clean.toLowerCase());
+  const all = {...PROJECT.deps,...PROJECT.devDeps};
+  const techs = [];
+  if (all['react'])           techs.push('React');
+  if (all['react-native'])    techs.push('React Native');
+  if (all['next'])            techs.push('Next.js');
+  if (all['vite']||paths.some(p=>p.includes('vite.config'))) techs.push('Vite');
+  if (all['typescript']||paths.some(p=>p.endsWith('.tsx')||p.endsWith('.ts'))) techs.push('TypeScript');
+  if (all['tailwindcss'])     techs.push('Tailwind CSS');
+  if (all['electron'])        techs.push('Electron');
+  if (all['expo'])            techs.push('Expo');
+  if (all['express'])         techs.push('Express');
+  if (all['drizzle-orm'])     techs.push('Drizzle ORM');
+  if (all['@supabase/supabase-js']) techs.push('Supabase');
+  if (all['better-sqlite3']||all['@libsql/client']) techs.push('SQLite');
+  if (all['@webcontainer/api']) techs.push('WebContainer');
+  if (paths.some(p=>p.endsWith('.py'))) techs.push('Python');
+  if (paths.some(p=>p.includes('electron/')||p.includes('electron\\'))) techs.push('Electron');
+  return [...new Set(techs)];
+}
+
+function detectType() {
+  const t = PROJECT.techs;
+  if (t.includes('Expo')||t.includes('React Native')) return 'Mobile (Expo/React Native)';
+  if (t.includes('Electron')) return 'Desktop (Electron)';
+  if (t.includes('Next.js')) return 'Web Full-Stack (Next.js)';
+  if (t.includes('React')&&t.includes('Express')) return 'Web Full-Stack (React + Express)';
+  if (t.includes('React')) return 'Web Frontend (React/Vite)';
+  if (t.includes('Express')) return 'Backend (Node.js/Express)';
+  return 'Projeto Web';
+}
+
+// ── Renderizar tipo ──────────────────────────────────
+function renderProjectType() {
+  const el = document.getElementById('project-type');
+  el.innerHTML = `
+    <p style="font-size:14px;font-weight:600;margin-bottom:8px;">📌 ${PROJECT.type}</p>
+    <p style="font-size:12px;color:#8b949e;margin-bottom:10px;">Nome: <strong style="color:#e6edf3;">${PROJECT.name}</strong></p>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;">
+      ${PROJECT.techs.map(t=>`<span class="tag tag-dep">${t}</span>`).join('')||'<span style="color:#8b949e;font-size:12px;">Nenhuma tecnologia detectada</span>'}
+    </div>
+  `;
+}
+
+// ── Renderizar deps ──────────────────────────────────
+function renderDeps() {
+  const el = document.getElementById('deps-list');
+  const allDeps = [
+    ...Object.entries(PROJECT.deps).map(([n,v])=>({n,v,type:'dep'})),
+    ...Object.entries(PROJECT.devDeps).map(([n,v])=>({n,v,type:'dev'})),
+  ];
+
+  if (!allDeps.length) { el.innerHTML='<p style="font-size:12px;color:#8b949e;">Nenhuma dependência encontrada no package.json</p>'; return; }
+
+  el.innerHTML = `
+    <p style="font-size:11px;color:#8b949e;margin-bottom:8px;">${allDeps.length} dependências • Clique em "Buscar versões no npm" para ver as versões mais recentes</p>
+    <div id="dep-rows">
+      ${allDeps.map(d=>`
+        <div class="dep-item" id="dep-${d.n.replace(/[@\/]/g,'_')}">
+          <span class="dep-name">${d.n}</span>
+          <span class="dep-ver" id="ver-${d.n.replace(/[@\/]/g,'_')}">${d.v}</span>
+          <span class="dep-type" style="background:${d.type==='dep'?'#1f2a1f':'#1f1f2a'};color:${d.type==='dep'?'#3fb950':'#58a6ff'};">${d.type==='dep'?'prod':'dev'}</span>
+          <span class="dep-desc" id="desc-${d.n.replace(/[@\/]/g,'_')}">—</span>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+// ── Buscar versões no npm ────────────────────────────
+window.searchAllNpm = async () => {
+  const allDeps = [...Object.keys(PROJECT.deps),...Object.keys(PROJECT.devDeps)];
+  const statusEl = document.getElementById('npm-status');
+  statusEl.innerHTML = `<span class="loading">⏳</span> Buscando ${allDeps.length} pacotes...`;
+
+  let found=0, fail=0;
+  const results = {};
+
+  // Buscar em paralelo (lotes de 5)
+  for (let i=0;i<allDeps.length;i+=5) {
+    const batch = allDeps.slice(i,i+5);
+    await Promise.all(batch.map(async (pkg) => {
+      try {
+        const r = await fetch(`https://registry.npmjs.org/${encodeURIComponent(pkg)}/latest`,{signal:AbortSignal.timeout(5000)});
+        if (r.ok) {
+          const d = await r.json();
+          results[pkg] = { version: d.version||'latest', desc: (d.description||'').slice(0,60) };
+          found++;
+        } else { fail++; }
+      } catch { fail++; }
+      // Atualizar UI em tempo real
+      const key = pkg.replace(/[@\/]/g,'_');
+      const verEl = document.getElementById('ver-'+key);
+      const descEl = document.getElementById('desc-'+key);
+      if (verEl && results[pkg]) {
+        verEl.textContent = '^'+results[pkg].version;
+        verEl.style.color = '#3fb950';
+      }
+      if (descEl && results[pkg]?.desc) descEl.textContent = results[pkg].desc;
+    }));
+    statusEl.textContent = `Buscando... ${Math.min(i+5,allDeps.length)}/${allDeps.length}`;
+  }
+
+  // Atualizar package.json com versões novas
+  for (const [pkg, info] of Object.entries(results)) {
+    if (PROJECT.deps[pkg])    PROJECT.deps[pkg]    = '^'+info.version;
+    if (PROJECT.devDeps[pkg]) PROJECT.devDeps[pkg] = '^'+info.version;
+  }
+  renderPackageJson();
+  statusEl.textContent = `✅ ${found} encontrados · ${fail} não encontrados`;
+};
+
+// ── package.json ─────────────────────────────────────
+function renderPackageJson() {
+  const pkg = {
+    name: PROJECT.name.toLowerCase().replace(/\s+/g,'-'),
+    version: '1.0.0',
+    private: true,
+    scripts: PROJECT.scripts,
+    dependencies: PROJECT.deps,
+    devDependencies: PROJECT.devDeps,
+  };
+  if (!Object.keys(pkg.scripts).length) delete pkg.scripts;
+  if (!Object.keys(pkg.dependencies).length) delete pkg.dependencies;
+  if (!Object.keys(pkg.devDependencies).length) delete pkg.devDependencies;
+  document.getElementById('pkg-out').value = JSON.stringify(pkg, null, 2);
+}
+
+// ── Comandos para recriar ────────────────────────────
+function renderCommands() {
+  const t = PROJECT.techs;
+  const isTs = t.includes('TypeScript');
+  const isReact = t.includes('React');
+  const isVite = t.includes('Vite');
+  const isNext = t.includes('Next.js');
+  const isElectron = t.includes('Electron');
+  const isExpo = t.includes('Expo');
+  const isExpress = t.includes('Express');
+  const isTailwind = t.includes('Tailwind CSS');
+  const isSB = t.includes('Supabase');
+  const isDrizzle = t.includes('Drizzle ORM');
+
+  const sections = [];
+
+  // 1. Criar projeto base
+  sections.push({
+    title: '1. CRIAR PROJETO BASE',
+    cmds: isExpo
+      ? [`npx create-expo-app ${PROJECT.name} --template blank-typescript`]
+      : isNext
+      ? [`npx create-next-app@latest ${PROJECT.name} --typescript --tailwind --eslint`]
+      : isVite && isReact
+      ? [`npm create vite@latest ${PROJECT.name} -- --template ${isTs?'react-ts':'react'}`, `cd ${PROJECT.name}`]
+      : [`mkdir ${PROJECT.name}`, `cd ${PROJECT.name}`, `npm init -y`]
+  });
+
+  // 2. Instalar dependências principais
+  const prodDeps = Object.keys(PROJECT.deps).filter(d=>!['react','react-dom','next'].includes(d));
+  if (prodDeps.length) {
+    sections.push({ title:'2. INSTALAR DEPENDÊNCIAS', cmds:[`npm install ${prodDeps.join(' ')}`] });
+  }
+
+  // 3. Dev dependencies
+  const devDeps = Object.keys(PROJECT.devDeps).filter(d=>!['typescript','@types/react','@types/react-dom','vite','@vitejs/plugin-react','tailwindcss'].includes(d));
+  if (devDeps.length) {
+    sections.push({ title:'3. INSTALAR DEV DEPENDENCIES', cmds:[`npm install -D ${devDeps.join(' ')}`] });
+  }
+
+  // 4. Configurar Tailwind
+  if (isTailwind && !isNext) {
+    sections.push({ title:'4. CONFIGURAR TAILWIND', cmds:[
+      'npm install -D tailwindcss postcss autoprefixer',
+      'npx tailwindcss init -p',
+    ]});
+  }
+
+  // 5. Configurar Electron
+  if (isElectron) {
+    sections.push({ title:'5. CONFIGURAR ELECTRON', cmds:[
+      'npm install -D electron electron-builder',
+      '(criar electron/main.js conforme estrutura original)',
+    ]});
+  }
+
+  // 6. Configurar Drizzle
+  if (isDrizzle) {
+    sections.push({ title:'6. CONFIGURAR DRIZZLE ORM', cmds:[
+      'npm install drizzle-orm @libsql/client',
+      'npm install -D drizzle-kit',
+      '(criar drizzle.config.ts e schema em lib/db/schema/)',
+      'npx drizzle-kit push',
+    ]});
+  }
+
+  // 7. Configurar Supabase
+  if (isSB) {
+    sections.push({ title:'7. CONFIGURAR SUPABASE', cmds:[
+      'npm install @supabase/supabase-js',
+      '(criar .env com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY)',
+      '(criar lib/supabase.ts com createClient)',
+    ]});
+  }
+
+  // 8. Criar estrutura de pastas
+  const importantDirs = PROJECT.dirs.filter(d=>
+    !d.startsWith('node_modules')&&!d.startsWith('dist')&&!d.startsWith('.git')&&d.includes('/')===false
+  ).slice(0,15);
+  if (importantDirs.length) {
+    sections.push({ title:'8. CRIAR PASTAS', cmds: importantDirs.map(d=>`mkdir ${d}`) });
+  }
+
+  // 9. Criar arquivos de configuração
+  const cfgFiles = PROJECT.files.filter(f=>
+    ['tsconfig.json','vite.config.ts','vite.config.js','tailwind.config.ts','drizzle.config.ts','.env.example','postcss.config.js'].some(n=>f.clean.endsWith(n))
+  );
+  if (cfgFiles.length) {
+    sections.push({ title:'9. CRIAR ARQUIVOS DE CONFIG', cmds: cfgFiles.map(f=>`(criar ${f.clean} — ver conteúdo original)`) });
+  }
+
+  // 10. Rodar projeto
+  const devScript = PROJECT.scripts['dev']||PROJECT.scripts['start']||PROJECT.scripts['serve'];
+  sections.push({ title:'10. RODAR PROJETO', cmds:[
+    'npm install',
+    devScript ? `npm run ${Object.keys(PROJECT.scripts).find(k=>PROJECT.scripts[k]===devScript)||'dev'}` : 'npm run dev',
+  ]});
+
+  // Gerar texto do bat
+  let bat = `@echo off\necho Replicando projeto: ${PROJECT.name}\n\n`;
+  for (const sec of sections) {
+    bat += `rem === ${sec.title} ===\n`;
+    for (const cmd of sec.cmds) {
+      if (cmd.startsWith('(')) bat += `rem ${cmd}\n`;
+      else bat += `${cmd}\n`;
+    }
+    bat += '\n';
+  }
+  bat += `echo.\necho Projeto criado! Verifique os arquivos de configuracao.\npause`;
+  document.getElementById('cmds-out').value = bat;
+}
+
+// ── Árvore ───────────────────────────────────────────
+function renderTree() {
+  const files = PROJECT.files.filter(f=>
+    !f.clean.startsWith('node_modules')&&!f.clean.startsWith('dist')&&!f.clean.startsWith('.git')
+  );
+
+  const tree = {};
+  for (const f of files) {
+    const parts = f.clean.split('/');
+    let node = tree;
+    for (let i=0;i<parts.length-1;i++){
+      if (!node[parts[i]]) node[parts[i]]={};
+      node = node[parts[i]];
+    }
+    node[parts[parts.length-1]] = f;
+  }
+
+  const lines = [];
+  function print(node, prefix='') {
+    const keys = Object.keys(node).sort((a,b)=>{
+      const ad=typeof node[a]==='object'&&!node[a].path;
+      const bd=typeof node[b]==='object'&&!node[b].path;
+      return (bd-ad)||a.localeCompare(b);
+    });
+    keys.forEach((k,i)=>{
+      const last=i===keys.length-1;
+      const c=last?'└─ ':'├─ ';
+      const child=node[k];
+      if (child?.path) lines.push(`${prefix}${c}📄 ${k}`);
+      else { lines.push(`${prefix}${c}📁 ${k}/`); print(child, prefix+(last?'   ':'│  ')); }
+    });
+  }
+  print(tree);
+  document.getElementById('tree-out').textContent = lines.slice(0,200).join('\n')+(lines.length>200?'\n... (truncado)':'');
+}
+
+// ── Utilitários ──────────────────────────────────────
+function copyText(id) {
+  const el=document.getElementById(id);
+  const txt=el.tagName==='TEXTAREA'?el.value:el.textContent;
+  navigator.clipboard.writeText(txt).then(()=>toast('✅ Copiado!'));
+}
+
+function downloadText(id, fname) {
+  const el=document.getElementById(id);
+  const txt=el.tagName==='TEXTAREA'?el.value:el.textContent;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  a.download=fname; a.click();
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔗 Teste APK + Termux</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #0a0a0a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .status-box {
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .log.success {
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .log.error {
+            color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .log.info {
+            color: #00aaff;
+            background: rgba(0, 170, 255, 0.1);
+        }
+        
+        .log.warning {
+            color: #ffaa00;
+            background: rgba(255, 170, 0, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #00cc00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .info-section {
+            background: #1a1a1a;
+            border-left: 4px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .info-section h3 {
+            color: #00ff00;
+            margin-bottom: 10px;
+        }
+        
+        .info-section p {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #aaa;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        
+        .status-indicator.disconnected {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+            animation: none;
+        }
+        
+        .status-indicator.testing {
+            background: #ffaa00;
+            animation: pulse 0.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .result {
+            background: #0a0a0a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result.success {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+        }
+        
+        .result.error {
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Teste APK ↔ Termux</h1>
+        
+        <div class="info-section">
+            <h3>📋 Como Usar:</h3>
+            <p>
+                1️⃣ Abra Termux no seu celular<br>
+                2️⃣ Cole o código do servidor (veja abaixo)<br>
+                3️⃣ Clique nos botões aqui para testar<br>
+                4️⃣ Veja se conecta ou não
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <span class="status-indicator disconnected" id="statusIndicator"></span>
+            <span id="statusText">Desconectado</span>
+        </div>
+        
+        <button onclick="testarConexaoSimples()">🧪 Teste 1: Conexão Básica</button>
+        <button onclick="testarConexaoComDados()">📊 Teste 2: Enviar/Receber Dados</button>
+        <button onclick="testarComandoTermux()">⚙️ Teste 3: Executar Comando</button>
+        <button onclick="testarMultiplas()">🔄 Teste 4: Múltiplas Requisições</button>
+        <button onclick="limparLogs()">🗑️ Limpar Logs</button>
+        
+        <div class="status-box" id="logs">
+            <div class="log info">📍 Aguardando testes...</div>
+        </div>
+        
+        <div class="result" id="result"></div>
+        
+        <div class="info-section">
+            <h3>🖥️ Código para Rodar no Termux:</h3>
+            <p style="background: #000; padding: 10px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-size: 11px;">
+npm install express
+cat > server.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.get('/teste', (req, res) => {
+    res.json({ 
+        status: 'conectado',
+        mensagem: 'APK conectou com sucesso!',
+        horario: new Date()
+    });
+});
+
+app.post('/dados', (req, res) => {
+    res.json({
+        recebido: req.body,
+        resposta: 'Dados recebidos!'
+    });
+});
+
+app.get('/comando', (req, res) => {
+    res.json({
+        comando: 'teste',
+        resultado: 'Comando executado!'
+    });
+});
+
+app.listen(8080, '0.0.0.0', () => {
+    console.log('✅ Servidor rodando em http://localhost:8080');
+});
+EOF
+node server.js
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const logsDiv = document.getElementById('logs');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const resultDiv = document.getElementById('result');
+        
+        function addLog(mensagem, tipo = 'info') {
+            const log = document.createElement('div');
+            log.className = `log ${tipo}`;
+            log.textContent = `[${new Date().toLocaleTimeString()}] ${mensagem}`;
+            logsDiv.appendChild(log);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function setStatus(conectado, testando = false) {
+            if (testando) {
+                statusIndicator.className = 'status-indicator testing';
+                statusText.textContent = 'Testando...';
+            } else if (conectado) {
+                statusIndicator.className = 'status-indicator connected';
+                statusText.textContent = '✅ Conectado';
+            } else {
+                statusIndicator.className = 'status-indicator disconnected';
+                statusText.textContent = '❌ Desconectado';
+            }
+        }
+        
+        function showResult(titulo, dados, sucesso = true) {
+            resultDiv.className = `result show ${sucesso ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `
+                <h3>${titulo}</h3>
+                <pre style="background: #000; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px;">
+${JSON.stringify(dados, null, 2)}
+                </pre>
+            `;
+        }
+        
+        async function testarConexaoSimples() {
+            addLog('🔄 Iniciando Teste 1: Conexão Básica...', 'info');
+            setStatus(false, true);
+            
+            try {
+                addLog('📡 Conectando em http://localhost:8080/teste', 'info');
+                
+                const resposta = await Promise.race([
+                    fetch('http://localhost:8080/teste', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout: Servidor não respondeu')), 5000)
+                    )
+                ]);
+                
+                if (resposta.ok) {
+                    const dados = await resposta.json();
+                    addLog('✅ CONEXÃO ESTABELECIDA!', 'success');
+                    addLog(`📊 Resposta: ${JSON.stringify(dados)}`, 'success');
+                    setStatus(true);
+                    showResult('✅ Conexão Bem-Sucedida', dados, true);
+                } else {
+                    addLog(`❌ Erro HTTP: ${resposta.status}`, 'error');
+                    setStatus(false);
+                    showResult('❌ Erro na Resposta', { status: resposta.status }, false);
+                }
+                
+            } catch (erro) {
+                addLog(`❌ ERRO: ${erro.message}`, 'error');
+                addLog('💡 Dica: Termux está rodando? Porta 8080 está aberta?', 'warning');
+                setStatus(false);
+                showResult('❌ Falha na Conexão', { erro: erro.message }, false);
+            }
+        }
+        
+        async function testarConexaoComDados() {
+            addLog('🔄 Iniciando Teste 2: Enviar/Receber Dados...', 'info');
+            setStatus(false, true);
+            
+            try {
+                const dadosEnvio = {
+                    teste: 'APK enviando dados',
+                    timestamp: new Date().toISOString()
+                };
+                
+                addLog(`📤 Enviando dados: ${JSON.stringify(dadosEnvio)}`, 'info');
+                
+                const resposta = await Promise.race([
+                    fetch('http://localhost:8080/dados', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dadosEnvio)
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 5000)
+                    )
+                ]);
+                
+                const dados = await resposta.json();
+                addLog('✅ Dados enviados e recebidos!', 'success');
+                addLog(`📥 Resposta: ${JSON.stringify(dados)}`, 'success');
+                setStatus(true);
+                showResult('✅ Comunicação Bidirecional Funcionando', dados, true);
+                
+            } catch (erro) {
+                addLog(`❌ ERRO: ${erro.message}`, 'error');
+                setStatus(false);
+                showResult('❌ Falha na Comunicação', { erro: erro.message }, false);
+            }
+        }
+        
+        async function testarComandoTermux() {
+            addLog('🔄 Iniciando Teste 3: Executar Comando...', 'info');
+            setStatus(false, true);
+            
+            try {
+                addLog('⚙️ Solicitando execução de comando', 'info');
+                
+                const resposta = await Promise.race([
+                    fetch('http://localhost:8080/comando', {
+                        method: 'GET'
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 5000)
+                    )
+                ]);
+                
+                const dados = await resposta.json();
+                addLog('✅ Comando executado!', 'success');
+                addLog(`📋 Resultado: ${JSON.stringify(dados)}`, 'success');
+                setStatus(true);
+                showResult('✅ Comando Executado com Sucesso', dados, true);
+                
+            } catch (erro) {
+                addLog(`❌ ERRO: ${erro.message}`, 'error');
+                setStatus(false);
+                showResult('❌ Falha na Execução', { erro: erro.message }, false);
+            }
+        }
+        
+        async function testarMultiplas() {
+            addLog('🔄 Iniciando Teste 4: Múltiplas Requisições...', 'info');
+            setStatus(false, true);
+            
+            let sucessos = 0;
+            let erros = 0;
+            
+            for (let i = 1; i <= 5; i++) {
+                try {
+                    addLog(`📡 Requisição ${i}/5...`, 'info');
+                    
+                    const resposta = await Promise.race([
+                        fetch('http://localhost:8080/teste'),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Timeout')), 3000)
+                        )
+                    ]);
+                    
+                    if (resposta.ok) {
+                        sucessos++;
+                        addLog(`✅ Requisição ${i} OK`, 'success');
+                    } else {
+                        erros++;
+                        addLog(`❌ Requisição ${i} Falhou`, 'error');
+                    }
+                    
+                } catch (erro) {
+                    erros++;
+                    addLog(`❌ Requisição ${i} Erro: ${erro.message}`, 'error');
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            addLog(`📊 Resultado: ${sucessos} OK, ${erros} Falhas`, 'info');
+            setStatus(sucessos > 0);
+            showResult('📊 Teste de Múltiplas Requisições', {
+                total: 5,
+                sucessos: sucessos,
+                erros: erros,
+                taxa_sucesso: `${(sucessos/5*100).toFixed(0)}%`
+            }, sucessos > 0);
+        }
+        
+        function limparLogs() {
+            logsDiv.innerHTML = '<div class="log info">📍 Logs limpos</div>';
+            resultDiv.className = 'result';
+        }
+        
+        // Log inicial
+        addLog('🚀 Sistema pronto para testes', 'success');
+        addLog('⚠️ Certifique-se de que Termux está rodando o servidor', 'warning');
+    </script>
+</body>
+</html>

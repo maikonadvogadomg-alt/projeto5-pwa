@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Sistema Profissional Modular - Jurídico com Dados Reais">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Sistema Profissional - Modular</title>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR NAVEGAÇÃO -->
+        <aside class="sidebar" id="sidebar" role="navigation">
+            <div class="sidebar-header">
+                <button class="sidebar-close-mobile" id="sidebarCloseMobile">✕</button>
+                <h1>📊 Sistema</h1>
+                <p>Profissional Modular</p>
+            </div>
+
+            <nav class="sidebar-menu" id="sidebarMenu">
+                <div class="menu-item active" data-page="dashboard">
+                    <span class="menu-icon">📈</span>
+                    <span class="menu-text">Dashboard</span>
+                </div>
+                <div class="menu-item" data-page="projetos">
+                    <span class="menu-icon">📁</span>
+                    <span class="menu-text">Projetos</span>
+                </div>
+                <div class="menu-item" data-page="tarefas">
+                    <span class="menu-icon">✅</span>
+                    <span class="menu-text">Tarefas</span>
+                </div>
+                <div class="menu-item" data-page="usuarios">
+                    <span class="menu-icon">👥</span>
+                    <span class="menu-text">Usuários</span>
+                </div>
+                <div class="menu-item" data-page="configuracoes">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-text">Configurações</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="connection-status">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">LocalStorage</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- OVERLAY MOBILE -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <div class="main-content">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <button class="menu-toggle-mobile" id="menuToggle">☰</button>
+                <h2 class="topbar-title" id="pageTitle">Dashboard</h2>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-small" id="syncBtn" onclick="sincronizarDados()">
+                        🔄
+                    </button>
+                </div>
+            </header>
+
+            <!-- ÁREA DE CONTEÚDO -->
+            <div class="content-area" id="contentArea"></div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO PROJETO -->
+    <div class="modal" id="projetoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="projetoModalTitle">Novo Projeto</h2>
+                <button class="close-btn" onclick="fecharModal('projetoModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="projetoNome">Nome do Projeto:</label>
+                    <input type="text" id="projetoNome" placeholder="Ex: Sistema Web">
+                </div>
+                <div class="form-group">
+                    <label for="projetoDescricao">Descrição:</label>
+                    <textarea id="projetoDescricao" placeholder="Descrição do projeto"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="projetoStatus">Status:</label>
+                    <select id="projetoStatus">
+                        <option value="Planejamento">Planejamento</option>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Pausado">Pausado</option>
+                        <option value="Concluído">Concluído</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="projetoProgresso">Progresso (%):</label>
+                    <input type="number" id="projetoProgresso" min="0" max="100" value="0">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="salvarProjeto()">
+                    Salvar Projeto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVA TAREFA -->
+    <div class="modal" id="tarefaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="tarefaModalTitle">Nova Tarefa</h2>
+                <button class="close-btn" onclick="fecharModal('tarefaModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="tarefaNome">Nome da Tarefa:</label>
+                    <input type="text" id="tarefaNome" placeholder="Ex: Design da interface">
+                </div>
+                <div class="form-group">
+                    <label for="tarefaProjeto">Projeto:</label>
+                    <select id="tarefaProjeto"></select>
+                </div>
+                <div class="form-group">
+                    <label for="tarefaResponsavel">Responsável:</label>
+                    <input type="text" id="tarefaResponsavel" placeholder="Nome do responsável">
+                </div>
+                <div class="form-group">
+                    <label for="tarefaStatus">Status:</label>
+                    <select id="tarefaStatus">
+                        <option value="Pendente">Pendente</option>
+                        <option value="Em Progresso">Em Progresso</option>
+                        <option value="Concluída">Concluída</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="salvarTarefa()">
+                    Salvar Tarefa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO USUÁRIO -->
+    <div class="modal" id="usuarioModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="usuarioModalTitle">Novo Usuário</h2>
+                <button class="close-btn" onclick="fecharModal('usuarioModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="usuarioNome">Nome:</label>
+                    <input type="text" id="usuarioNome" placeholder="Nome completo">
+                </div>
+                <div class="form-group">
+                    <label for="usuarioEmail">Email:</label>
+                    <input type="email" id="usuarioEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="usuarioFuncao">Função:</label>
+                    <select id="usuarioFuncao">
+                        <option value="Admin">Admin</option>
+                        <option value="Desenvolvedor">Desenvolvedor</option>
+                        <option value="Designer">Designer</option>
+                        <option value="Gerente">Gerente</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="salvarUsuario()">
+                    Salvar Usuário
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+/* ============================================
+   RESET E VARIÁVEIS GLOBAIS
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --light: #f8f9fa;
+    --dark: #1e1e1e;
+    --border: #e9ecef;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: #333;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+}
+
+.app-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 280px;
+    background: white;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    text-align: center;
+}
+
+.sidebar-header h1 {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+.sidebar-header p {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.sidebar-close-mobile {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 0;
+}
+
+.menu-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    font-weight: 500;
+}
+
+.menu-item:hover {
+    background: var(--light);
+    border-left-color: var(--primary);
+    color: var(--primary);
+}
+
+.menu-item.active {
+    background: rgba(102, 126, 234, 0.1);
+    border-left-color: var(--primary);
+    color: var(--primary);
+}
+
+.menu-icon {
+    font-size: 1.3em;
+}
+
+.sidebar-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--light);
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: white;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+/* CONTEÚDO PRINCIPAL */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.topbar {
+    background: white;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    box-shadow: var(--shadow);
+}
+
+.menu-toggle-mobile {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #333;
+}
+
+.topbar-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px;
+    background: #f5f6fa;
+}
+
+/* BOTÕES */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+    background: var(--light);
+    color: #666;
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: #e9ecef;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    opacity: 0.9;
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 0.9em;
+}
+
+/* CARDS */
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.card-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+}
+
+.card-body {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* FORMULÁRIOS */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 1em;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* TABELAS */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: var(--light);
+}
+
+th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid var(--border);
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+tr:hover {
+    background: var(--light);
+}
+
+/* MODAIS */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+    font-size: 1.5em;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #999;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+/* ALERTAS */
+.alert {
+    padding: 15px 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+/* GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.stat-label {
+    color: #999;
+    margin-top: 10px;
+    font-size: 0.95em;
+}
+
+/* BADGE */
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* SPINNER */
+.spinner {
+    border: 3px solid var(--light);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 50px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 80%;
+        max-width: 280px;
+        transform: translateX(-100%);
+        transition: all 0.3s;
+        z-index: 101;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    .sidebar-close-mobile {
+        display: block;
+    }
+
+    .menu-toggle-mobile {
+        display: block;
+    }
+
+    .topbar {
+        padding: 12px 15px;
+    }
+
+    .topbar-title {
+        font-size: 1.2em;
+    }
+
+    .content-area {
+        padding: 15px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    th, td {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar-title {
+        font-size: 1em;
+    }
+
+    .stat-number {
+        font-size: 2em;
+    }
+
+    .content-area {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    .grid {
+        gap: 15px;
+    }
+}
+    </style>
+
+    <script>
+// ============================================
+// CONFIGURAÇÃO GLOBAL
+// ============================================
+const CONFIG = {
+    currentPage: 'dashboard',
+    editandoId: null,
+    editandoTipo: null
+};
+
+const DB = {
+    projetos: [],
+    tarefas: [],
+    usuarios: []
+};
+
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    carregarDadosDoStorage();
+    setupEventListeners();
+    carregarPagina('dashboard');
+});
+
+function setupEventListeners() {
+    // Menu items
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            mudarPagina(page);
+        });
+    });
+
+    // Menu toggle mobile
+    document.getElementById('menuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    });
+
+    // Fechar menu
+    document.getElementById('sidebarCloseMobile').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+    });
+
+    document.getElementById('sidebarOverlay').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+    });
+}
+
+// ============================================
+// GERENCIAMENTO DE PÁGINAS
+// ============================================
+function mudarPagina(page) {
+    CONFIG.currentPage = page;
+    
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.page === page) {
+            item.classList.add('active');
+        }
+    });
+
+    carregarPagina(page);
+}
+
+function carregarPagina(page) {
+    const titles = {
+        dashboard: 'Dashboard',
+        projetos: 'Projetos',
+        tarefas: 'Tarefas',
+        usuarios: 'Usuários',
+        configuracoes: 'Configurações'
+    };
+
+    document.getElementById('pageTitle').textContent = titles[page] || 'Página';
+    document.getElementById('contentArea').innerHTML = '<div class="spinner"></div>';
+
+    setTimeout(() => {
+        let conteudo = '';
+        switch(page) {
+            case 'dashboard':
+                conteudo = renderDashboard();
+                break;
+            case 'projetos':
+                conteudo = renderProjetos();
+                break;
+            case 'tarefas':
+                conteudo = renderTarefas();
+                break;
+            case 'usuarios':
+                conteudo = renderUsuarios();
+                break;
+            case 'configuracoes':
+                conteudo = renderConfiguracoes();
+                break;
+        }
+        document.getElementById('contentArea').innerHTML = conteudo;
+    }, 300);
+}
+
+// ============================================
+// RENDERIZADORES DE PÁGINA
+// ============================================
+function renderDashboard() {
+    const totalProjetos = DB.projetos.length;
+    const totalTarefas = DB.tarefas.length;
+    const totalUsuarios = DB.usuarios.length;
+    const tarefasConcluidas = DB.tarefas.filter(t => t.status === 'Concluída').length;
+
+    return `
+        <div class="grid">
+            <div class="stat-card">
+                <div class="stat-number">${totalProjetos}</div>
+                <div class="stat-label">Projetos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">${totalTarefas}</div>
+                <div class="stat-label">Tarefas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">${tarefasConcluidas}</div>
+                <div class="stat-label">Concluídas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">${totalUsuarios}</div>
+                <div class="stat-label">Usuários</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📊 Resumo Geral</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Taxa de Conclusão:</strong> ${totalTarefas > 0 ? Math.round((tarefasConcluidas / totalTarefas) * 100) : 0}%</p>
+                <p><strong>Projetos Ativos:</strong> ${DB.projetos.filter(p => p.status === 'Ativo').length}</p>
+                <p><strong>Tarefas Pendentes:</strong> ${DB.tarefas.filter(t => t.status === 'Pendente').length}</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📈 Últimos Projetos</h3>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Progresso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${DB.projetos.slice(-5).map(p => `
+                            <tr>
+                                <td>${p.nome}</td>
+                                <td><span class="badge badge-${p.status === 'Ativo' ? 'success' : 'info'}">${p.status}</span></td>
+                                <td>${p.progresso}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function renderProjetos() {
+    return `
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📁 Meus Projetos</h3>
+                <button class="btn btn-primary btn-small" onclick="abrirModalProjeto()">
+                    ➕ Novo
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Progresso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${DB.projetos.length === 0 ? '<tr><td colspan="4" style="text-align: center;">Nenhum projeto cadastrado</td></tr>' : DB.projetos.map((p, i) => `
+                            <tr>
+                                <td>${p.nome}</td>
+                                <td><span class="badge badge-${p.status === 'Ativo' ? 'success' : p.status === 'Planejamento' ? 'warning' : 'info'}">${p.status}</span></td>
+                                <td>${p.progresso}%</td>
+                                <td>
+                                    <button class="btn btn-secondary btn-small" onclick="editarProjeto(${i})">✏️</button>
+                                    <button class="btn btn-danger btn-small" onclick="deletarProjeto(${i})">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function renderTarefas() {
+    return `
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">✅ Tarefas</h3>
+                <button class="btn btn-primary btn-small" onclick="abrirModalTarefa()">
+                    ➕ Nova
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tarefa</th>
+                            <th>Projeto</th>
+                            <th>Responsável</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${DB.tarefas.length === 0 ? '<tr><td colspan="5" style="text-align: center;">Nenhuma tarefa cadastrada</td></tr>' : DB.tarefas.map((t, i) => `
+                            <tr>
+                                <td>${t.nome}</td>
+                                <td>${t.projeto}</td>
+                                <td>${t.responsavel}</td>
+                                <td><span class="badge badge-${t.status === 'Concluída' ? 'success' : t.status === 'Em Progresso' ? 'info' : 'warning'}">${t.status}</span></td>
+                                <td>
+                                    <button class="btn btn-secondary btn-small" onclick="editarTarefa(${i})">✏️</button>
+                                    <button class="btn btn-danger btn-small" onclick="deletarTarefa(${i})">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function renderUsuarios() {
+    return `
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">👥 Usuários</h3>
+                <button class="btn btn-primary btn-small" onclick="abrirModalUsuario()">
+                    ➕ Novo
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Função</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${DB.usuarios.length === 0 ? '<tr><td colspan="4" style="text-align: center;">Nenhum usuário cadastrado</td></tr>' : DB.usuarios.map((u, i) => `
+                            <tr>
+                                <td>${u.nome}</td>
+                                <td>${u.email}</td>
+                                <td><span class="badge badge-info">${u.funcao}</span></td>
+                                <td>
+                                    <button class="btn btn-secondary btn-small" onclick="editarUsuario(${i})">✏️</button>
+                                    <button class="btn btn-danger btn-small" onclick="deletarUsuario(${i})">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function renderConfiguracoes() {
+    return `
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">⚙️ Configurações</h3>
+            </div>
+            <div class="card-body">
+                <h4 style="margin-bottom: 15px;">Dados Locais</h4>
+                <p><strong>Projetos:</strong> ${DB.projetos.length}</p>
+                <p><strong>Tarefas:</strong> ${DB.tarefas.length}</p>
+                <p><strong>Usuários:</strong> ${DB.usuarios.length}</p>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="exportarDados()">📥 Exportar Dados</button>
+                    <button class="btn btn-secondary" onclick="limparDados()" style="margin-left: 10px;">🗑️ Limpar Tudo</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
+// FUNÇÕES DE MODAL
+// ============================================
+function abrirModalProjeto() {
+    CONFIG.editandoId = null;
+    CONFIG.editandoTipo = 'projeto';
+    document.getElementById('projetoNome').value = '';
+    document.getElementById('projetoDescricao').value = '';
+    document.getElementById('projetoStatus').value = 'Planejamento';
+    document.getElementById('projetoProgresso').value = '0';
+    document.getElementById('projetoModalTitle').textContent = 'Novo Projeto';
+    abrirModal('projetoModal');
+}
+
+function abrirModalTarefa() {
+    CONFIG.editandoId = null;
+    CONFIG.editandoTipo = 'tarefa';
+    document.getElementById('tarefaNome').value = '';
+    document.getElementById('tarefaResponsavel').value = '';
+    document.getElementById('tarefaStatus').value = 'Pendente';
+    
+    // Preencher select de projetos
+    const select = document.getElementById('tarefaProjeto');
+    select.innerHTML = DB.projetos.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+    if (DB.projetos.length === 0) {
+        select.innerHTML = '<option>Nenhum projeto disponível</option>';
+    }
+    
+    document.getElementById('tarefaModalTitle').textContent = 'Nova Tarefa';
+    abrirModal('tarefaModal');
+}
+
+function abrirModalUsuario() {
+    CONFIG.editandoId = null;
+    CONFIG.editandoTipo = 'usuario';
+    document.getElementById('usuarioNome').value = '';
+    document.getElementById('usuarioEmail').value = '';
+    document.getElementById('usuarioFuncao').value = 'Desenvolvedor';
+    document.getElementById('usuarioModalTitle').textContent = 'Novo Usuário';
+    abrirModal('usuarioModal');
+}
+
+function abrirModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+}
+
+function fecharModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// ============================================
+// FUNÇÕES DE PROJETO
+// ============================================
+function salvarProjeto() {
+    const nome = document.getElementById('projetoNome').value.trim();
+    const descricao = document.getElementById('projetoDescricao').value.trim();
+    const status = document.getElementById('projetoStatus').value;
+    const progresso = parseInt(document.getElementById('projetoProgresso').value);
+
+    if (!nome) {
+        alert('Preencha o nome do projeto');
+        return;
+    }
+
+    if (CONFIG.editandoId !== null) {
+        DB.projetos[CONFIG.editandoId] = { nome, descricao, status, progresso };
+        mostrarAlerta('✅ Projeto atualizado!', 'success');
+    } else {
+        DB.projetos.push({ nome, descricao, status, progresso });
+        mostrarAlerta('✅ Projeto criado!', 'success');
+    }
+
+    salvarDadosNoStorage();
+    fecharModal('projetoModal');
+    carregarPagina('projetos');
+}
+
+function editarProjeto(index) {
+    const projeto = DB.projetos[index];
+    CONFIG.editandoId = index;
+    CONFIG.editandoTipo = 'projeto';
+    
+    document.getElementById('projetoNome').value = projeto.nome;
+    document.getElementById('projetoDescricao').value = projeto.descricao;
+    document.getElementById('projetoStatus').value = projeto.status;
+    document.getElementById('projetoProgresso').value = projeto.progresso;
+    document.getElementById('projetoModalTitle').textContent = 'Editar Projeto';
+    
+    abrirModal('projetoModal');
+}
+
+function deletarProjeto(index) {
+    if (confirm('Tem certeza que deseja deletar este projeto?')) {
+        DB.projetos.splice(index, 1);
+        salvarDadosNoStorage();
+        mostrarAlerta('🗑️ Projeto deletado!', 'info');
+        carregarPagina('projetos');
+    }
+}
+
+// ============================================
+// FUNÇÕES DE TAREFA
+// ============================================
+function salvarTarefa() {
+    const nome = document.getElementById('tarefaNome').value.trim();
+    const projeto = document.getElementById('tarefaProjeto').value;
+    const responsavel = document.getElementById('tarefaResponsavel').value.trim();
+    const status = document.getElementById('tarefaStatus').value;
+
+    if (!nome || !responsavel) {
+        alert('Preencha todos os campos');
+        return;
+    }
+
+    if (CONFIG.editandoId !== null) {
+        DB.tarefas[CONFIG.editandoId] = { nome, projeto, responsavel, status };
+        mostrarAlerta('✅ Tarefa atualizada!', 'success');
+    } else {
+        DB.tarefas.push({ nome, projeto, responsavel, status });
+        mostrarAlerta('✅ Tarefa criada!', 'success');
+    }
+
+    salvarDadosNoStorage();
+    fecharModal('tarefaModal');
+    carregarPagina('tarefas');
+}
+
+function editarTarefa(index) {
+    const tarefa = DB.tarefas[index];
+    CONFIG.editandoId = index;
+    CONFIG.editandoTipo = 'tarefa';
+    
+    document.getElementById('tarefaNome').value = tarefa.nome;
+    document.getElementById('tarefaResponsavel').value = tarefa.responsavel;
+    document.getElementById('tarefaStatus').value = tarefa.status;
+    
+    const select = document.getElementById('tarefaProjeto');
+    select.innerHTML = DB.projetos.map(p => `<option value="${p.nome}" ${p.nome === tarefa.projeto ? 'selected' : ''}>${p.nome}</option>`).join('');
+    
+    document.getElementById('tarefaModalTitle').textContent = 'Editar Tarefa';
+    abrirModal('tarefaModal');
+}
+
+function deletarTarefa(index) {
+    if (confirm('Tem certeza que deseja deletar esta tarefa?')) {
+        DB.tarefas.splice(index, 1);
+        salvarDadosNoStorage();
+        mostrarAlerta('🗑️ Tarefa deletada!', 'info');
+        carregarPagina('tarefas');
+    }
+}
+
+// ============================================
+// FUNÇÕES DE USUÁRIO
+// ============================================
+function salvarUsuario() {
+    const nome = document.getElementById('usuarioNome').value.trim();
+    const email = document.getElementById('usuarioEmail').value.trim();
+    const funcao = document.getElementById('usuarioFuncao').value;
+
+    if (!nome || !email) {
+        alert('Preencha todos os campos');
+        return;
+    }
+
+    if (CONFIG.editandoId !== null) {
+        DB.usuarios[CONFIG.editandoId] = { nome, email, funcao };
+        mostrarAlerta('✅ Usuário atualizado!', 'success');
+    } else {
+        DB.usuarios.push({ nome, email, funcao });
+        mostrarAlerta('✅ Usuário criado!', 'success');
+    }
+
+    salvarDadosNoStorage();
+    fecharModal('usuarioModal');
+    carregarPagina('usuarios');
+}
+
+function editarUsuario(index) {
+    const usuario = DB.usuarios[index];
+    CONFIG.editandoId = index;
+    CONFIG.editandoTipo = 'usuario';
+    
+    document.getElementById('usuarioNome').value = usuario.nome;
+    document.getElementById('usuarioEmail').value = usuario.email;
+    document.getElementById('usuarioFuncao').value = usuario.funcao;
+    document.getElementById('usuarioModalTitle').textContent = 'Editar Usuário';
+    
+    abrirModal('usuarioModal');
+}
+
+function deletarUsuario(index) {
+    if (confirm('Tem certeza que deseja deletar este usuário?')) {
+        DB.usuarios.splice(index, 1);
+        salvarDadosNoStorage();
+        mostrarAlerta('🗑️ Usuário deletado!', 'info');
+        carregarPagina('usuarios');
+    }
+}
+
+// ============================================
+// ARMAZENAMENTO LOCAL
+// ============================================
+function salvarDadosNoStorage() {
+    localStorage.setItem('sistemaProjetos', JSON.stringify(DB.projetos));
+    localStorage.setItem('sistemaTarefas', JSON.stringify(DB.tarefas));
+    localStorage.setItem('sistemaUsuarios', JSON.stringify(DB.usuarios));
+}
+
+function carregarDadosDoStorage() {
+    DB.projetos = JSON.parse(localStorage.getItem('sistemaProjetos') || '[]');
+    DB.tarefas = JSON.parse(localStorage.getItem('sistemaTarefas') || '[]');
+    DB.usuarios = JSON.parse(localStorage.getItem('sistemaUsuarios') || '[]');
+}
+
+function sincronizarDados() {
+    mostrarAlerta('🔄 Dados sincronizados com sucesso!', 'success');
+}
+
+function exportarDados() {
+    const dados = {
+        projetos: DB.projetos,
+        tarefas: DB.tarefas,
+        usuarios: DB.usuarios,
+        dataExportacao: new Date().toLocaleString()
+    };
+
+    const json = JSON.stringify(dados, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sistema-backup-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    mostrarAlerta('📥 Dados exportados!', 'success');
+}
+
+function limparDados() {
+    if (confirm('⚠️ Tem certeza? Isso vai deletar TODOS os dados!')) {
+        DB.projetos = [];
+        DB.tarefas = [];
+        DB.usuarios = [];
+        salvarDadosNoStorage();
+        mostrarAlerta('🗑️ Todos os dados foram deletados!', 'info');
+        carregarPagina('dashboard');
+    }
+}
+
+// ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
+function mostrarAlerta(mensagem, tipo = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo}`;
+    alertDiv.innerHTML = `<span>${mensagem}</span>`;
+    
+    const contentArea = document.getElementById('contentArea');
+    contentArea.insertBefore(alertDiv, contentArea.firstChild);
+
+    setTimeout(() => alertDiv.remove(), 4000);
+}
+    </script>
+</body>
+</html>

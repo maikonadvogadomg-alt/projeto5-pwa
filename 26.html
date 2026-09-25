@@ -1,0 +1,482 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Jurídico - Playground</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0a0a0f; 
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { 
+            background: linear-gradient(135deg, #a3a082 0%, #8b7f5f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: #1a1a2e;
+            color: #e2e8f0;
+            border: 2px solid #2d2d3a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: #a3a082;
+            color: white;
+            border-color: #a3a082;
+        }
+        .tab-content {
+            display: none;
+            background: #12121a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #2d2d3a;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 15px;
+            background: #0a0a0f;
+            color: #4ade80;
+            border: 1px solid #2d2d3a;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 20px;
+            background: #a3a082;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(163, 160, 130, 0.4);
+        }
+        .list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .item {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #a3a082;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .item:hover {
+            background: #2d2d3a;
+            transform: translateY(-2px);
+        }
+        .item-name {
+            font-weight: 600;
+            color: #d4d0a8;
+            margin-bottom: 10px;
+        }
+        .item-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .item-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+        .info {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4ade80;
+        }
+        .info p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚖️ App Jurídico - Playground</h1>
+            <p>Organize seus códigos, links e documentos</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="mudarAba('playground')">📝 Playground</button>
+            <button class="tab-btn" onclick="mudarAba('links')">🔗 Links</button>
+            <button class="tab-btn" onclick="mudarAba('juridico')">⚖️ Jurídico</button>
+            <button class="tab-btn" onclick="mudarAba('backup')">💾 Backup</button>
+            <button class="tab-btn active" onclick="mudarAba('playground')">📝 Playground</button>
+            <button class="tab-btn" onclick="mudarAba('links')">🔗 Links</button>
+            <button class="tab-btn" onclick="mudarAba('juridico')">⚖️ Jurídico</button>
+            <button class="tab-btn" onclick="mudarAba('backup')">💾 Backup</button>
+            <button class="tab-btn active" onclick="mudarAba('playground')">📝 Playground</button>
+            <button class="tab-btn" onclick="mudarAba('links')">🔗 Links</button>
+            <button class="tab-btn" onclick="mudarAba('juridico')">⚖️ Jurídico</button>
+            <button class="tab-btn" onclick="mudarAba('backup')">💾 Backup</button>
+            <button class="tab-btn active" onclick="mudarAba('playground')">📝 Playground</button>
+            <button class="tab-btn" onclick="mudarAba('links')">🔗 Links</button>
+            <button class="tab-btn" onclick="mudarAba('juridico')">⚖️ Jurídico</button>
+            <button class="tab-btn" onclick="mudarAba('backup')">💾 Backup</button>
+        </div>
+
+        <!-- ABA: PLAYGROUND -->
+        <div id="playground" class="tab-content active">
+            <div class="info">
+                <p>💡 <strong>Dica:</strong> Salve seus códigos HTML/CSS/JS aqui. Eles serão armazenados localmente e não serão perdidos!</p>
+            </div>
+
+            <div class="form-group">
+                <label for="nomePlayground">Nome do Código:</label>
+                <input type="text" id="nomePlayground" placeholder="Ex: Meu HTML, Teste CSS, etc" style="width: 100%; padding: 10px; margin-bottom: 10px; background: #0a0a0f; color: #e2e8f0; border: 1px solid #2d2d3a; border-radius: 8px;">
+            </div>
+
+            <textarea id="codigoPlayground" placeholder="Cole seu código HTML/CSS/JS aqui..."></textarea>
+
+            <div class="button-group">
+                <button onclick="salvarPlayground()">💾 Salvar Código</button>
+                <button onclick="executarPlayground()">▶️ Executar</button>
+                <button onclick="baixarPlayground()">📥 Baixar</button>
+                <button onclick="copiarPlayground()">📋 Copiar</button>
+            </div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px;">Meus Códigos Salvos:</h3>
+            <div id="listaPlaygrounds" class="list"></div>
+
+            <div id="previewPlayground" style="margin-top: 30px; display: none;">
+                <h3>Preview:</h3>
+                <iframe id="iframePreview" style="width: 100%; height: 500px; border: 1px solid #2d2d3a; border-radius: 8px; background: white;"></iframe>
+            </div>
+        </div>
+
+        <!-- ABA: LINKS -->
+        <div id="links" class="tab-content">
+            <div class="info">
+                <p>🔗 <strong>Organize seus links:</strong> Adicione, marque e acesse seus links jurídicos favoritos.</p>
+            </div>
+            <iframe src="playgrounds/links.html" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
+        </div>
+
+        <!-- ABA: JURÍDICO -->
+        <div id="juridico" class="tab-content">
+            <div class="info">
+                <p>⚖️ <strong>Ferramentas Jurídicas:</strong> Acesse suas ferramentas e documentos jurídicos.</p>
+            </div>
+            <iframe src="playgrounds/juridico.html" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
+        </div>
+
+ <!-- ABA: LINKS -->
+        <div id="links" class="tab-content">
+            <div class="info">
+                <p>🔗 <strong>Organize seus links:</strong> Adicione, marque e acesse seus links jurídicos favoritos.</p>
+            </div>
+            <iframe src="playgrounds/links.html" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
+        </div>
+
+        <!-- ABA: JURÍDICO -->
+        <div id="juridico" class="tab-content">
+            <div class="info">
+                <p>⚖️ <strong>Ferramentas Jurídicas:</strong> Acesse suas ferramentas e documentos jurídicos.</p>
+            </div>
+            <iframe src="playgrounds/juridico.html" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
+        </div>
+
+        <!-- ABA: BACKUP -->
+        <div id="backup" class="tab-content">
+            <div class="info">
+                <p>💾 <strong>Backup de Dados:</strong> Exporte e importe seus dados para manter seguro.</p>
+            </div>
+            <div class="button-group">
+                <button onclick="exportarTudo()">📥 Exportar Tudo (JSON)</button>
+                <button onclick="importarTudo()">📤 Importar Dados</button>
+                <button onclick="limparTudo()">🗑️ Limpar Tudo</button>
+            </div>
+            <textarea id="backupJSON" style="margin-top: 20px;" placeholder="Seu backup JSON aparecerá aqui..." readonly></textarea>
+        </div>
+    </div>
+
+    <input type="file" id="backupInput" style="display: none;" accept=".json">
+
+    <script>
+        // ===== GERENCIADOR DE DADOS =====
+        class GerenciadorDados {
+            constructor() {
+                this.db = null;
+                this.inicializar();
+            }
+
+            inicializar() {
+                const request = indexedDB.open('PlaygroundDB', 1);
+                
+                request.onupgradeneeded = (e) => {
+                    this.db = e.target.result;
+                    if (!this.db.objectStoreNames.contains('codigos')) {
+                        this.db.createObjectStore('codigos', { keyPath: 'id' });
+                    }
+                };
+                
+                request.onsuccess = (e) => {
+                    this.db = e.target.result;
+                    console.log('✅ IndexedDB inicializado');
+                    carregarPlaygrounds();
+                };
+
+                request.onerror = () => {
+                    console.error('❌ Erro ao inicializar IndexedDB');
+                };
+            }
+
+            salvar(nome, codigo) {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction(['codigos'], 'readwrite');
+                    const store = transaction.objectStore('codigos');
+                    
+                    store.put({
+                        id: nome,
+                        codigo: codigo,
+                        data: new Date().toLocaleString('pt-BR')
+                    });
+                    
+                    transaction.oncomplete = () => {
+                        console.log('✅ Salvo com sucesso!');
+                        resolve(true);
+                    };
+                });
+            }
+
+            carregar(nome) {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction(['codigos'], 'readonly');
+                    const store = transaction.objectStore('codigos');
+                    const request = store.get(nome);
+                    
+                    request.onsuccess = () => {
+                        resolve(request.result?.codigo || '');
+                    };
+                });
+            }
+
+            listar() {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction(['codigos'], 'readonly');
+                    const store = transaction.objectStore('codigos');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => {
+                        resolve(request.result || []);
+                    };
+                });
+            }
+
+            deletar(nome) {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction(['codigos'], 'readwrite');
+                    const store = transaction.objectStore('codigos');
+                    store.delete(nome);
+                    
+                    transaction.oncomplete = () => {
+                        resolve(true);
+                    };
+                });
+            }
+
+            limpar() {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction(['codigos'], 'readwrite');
+                    const store = transaction.objectStore('codigos');
+                    store.clear();
+                    
+                    transaction.oncomplete = () => {
+                        resolve(true);
+                    };
+                });
+            }
+        }
+
+        // Instanciar gerenciador
+        const dados = new GerenciadorDados();
+
+        // ===== FUNÇÕES DO PLAYGROUND =====
+        function mudarAba(abaId) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(aba => {
+                aba.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Mostrar aba selecionada
+            document.getElementById(abaId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function salvarPlayground() {
+            const nome = document.getElementById('nomePlayground').value.trim();
+            const codigo = document.getElementById('codigoPlayground').value.trim();
+
+            if (!nome || !codigo) {
+                alert('⚠️ Preencha nome e código!');
+                return;
+            }
+
+            await dados.salvar(nome, codigo);
+            alert('✅ Código salvo com sucesso!');
+            document.getElementById('nomePlayground').value = '';
+            document.getElementById('codigoPlayground').value = '';
+            carregarPlaygrounds();
+        }
+
+        async function carregarPlaygrounds() {
+            const lista = await dados.listar();
+            const container = document.getElementById('listaPlaygrounds');
+
+            if (lista.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8;">Nenhum código salvo ainda</p>';
+                return;
+            }
+
+            container.innerHTML = lista.map(item => `
+                <div class="item">
+                    <div class="item-name">${item.id}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">${item.data}</div>
+                    <div class="item-actions">
+                        <button onclick="abrirPlayground('${item.id}')">Abrir</button>
+                        <button onclick="deletarPlayground('${item.id}')">Deletar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function abrirPlayground(nome) {
+            const codigo = await dados.carregar(nome);
+            document.getElementById('nomePlayground').value = nome;
+            document.getElementById('codigoPlayground').value = codigo;
+            window.scrollTo(0, 0);
+        }
+
+        async function deletarPlayground(nome) {
+            if (confirm(`Deletar "${nome}"?`)) {
+                await dados.deletar(nome);
+                carregarPlaygrounds();
+            }
+        }
+
+        function executarPlayground() {
+            const codigo = document.getElementById('codigoPlayground').value;
+            const preview = document.getElementById('previewPlayground');
+            const iframe = document.getElementById('iframePreview');
+
+            if (!codigo.trim()) {
+                alert('⚠️ Adicione código para executar!');
+                return;
+            }
+
+            preview.style.display = 'block';
+            iframe.srcdoc = codigo;
+        }
+
+        function baixarPlayground() {
+            const nome = document.getElementById('nomePlayground').value || 'codigo';
+            const codigo = document.getElementById('codigoPlayground').value;
+
+            const blob = new Blob([codigo], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${nome}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copiarPlayground() {
+            const codigo = document.getElementById('codigoPlayground').value;
+            navigator.clipboard.writeText(codigo);
+            alert('✅ Código copiado!');
+        }
+
+        async function exportarTudo() {
+            const lista = await dados.listar();
+            const json = JSON.stringify(lista, null, 2);
+            document.getElementById('backupJSON').value = json;
+            alert('✅ Dados exportados! Copie o JSON abaixo.');
+        }
+
+        function importarTudo() {
+            document.getElementById('backupInput').click();
+        }
+
+        document.getElementById('backupInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const lista = JSON.parse(ev.target.result);
+                    
+                    for (const item of lista) {
+                        await dados.salvar(item.id, item.codigo);
+                    }
+                    
+                    alert(`✅ ${lista.length} códigos importados!`);
+                    carregarPlaygrounds();
+                } catch (err) {
+                    alert('❌ Erro ao importar: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        async function limparTudo() {
+            if (confirm('⚠️ Tem certeza? Isso vai deletar TUDO!')) {
+                await dados.limpar();
+                alert('✅ Tudo deletado!');
+                carregarPlaygrounds();
+            }
+        }
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('js/sw.js').catch(err => {
+                console.log('SW não registrado:', err);
+            });
+        }
+    </script>
+</body>
+</html>

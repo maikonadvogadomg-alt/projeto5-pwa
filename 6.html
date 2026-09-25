@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Configuração do APK</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .secao {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .secao h2 {
+            font-size: 14px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .campo {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 13px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .cor-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .botoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .info {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 10px;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .preview {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .preview-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 2px solid #334155;
+        }
+
+        .resumo-config {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border-left: 3px solid #22c55e;
+        }
+
+        .resumo-config strong {
+            color: #3b82f6;
+        }
+
+        .resumo-config p {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Configuração do APK</h1>
+
+        <div class="grid">
+            <!-- INFORMAÇÕES BÁSICAS -->
+            <div class="secao">
+                <h2>📝 Informações Básicas</h2>
+
+                <div class="campo">
+                    <label>📱 Nome do App</label>
+                    <input type="text" id="nomeApp" placeholder="Meu App" value="SK Editor">
+                </div>
+
+                <div class="campo">
+                    <label>🆔 ID do App (Package Name)</label>
+                    <input type="text" id="idApp" placeholder="com.exemplo.app" value="com.skeditor.app">
+                    <div class="info">
+                        ℹ️ Deve ser único e em formato: com.empresa.app
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label>📌 Versão</label>
+                    <input type="number" id="versao" placeholder="1" value="1" min="1">
+                </div>
+
+                <div class="campo">
+                    <label>📝 Descrição</label>
+                    <input type="text" id="descricao" placeholder="Descrição do app" value="App jurídico interativo">
+                </div>
+            </div>
+
+            <!-- APARÊNCIA -->
+            <div class="secao">
+                <h2>🎨 Aparência</h2>
+
+                <div class="campo">
+                    <label>🎨 Cor Primária</label>
+                    <div class="cor-picker">
+                        <input type="color" id="corPrimaria" value="#3b82f6">
+                        <span id="corPrimariaTexto">#3b82f6</span>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label>🎨 Cor Secundária</label>
+                    <div class="cor-picker">
+                        <input type="color" id="corSecundaria" value="#1e293b">
+                        <span id="corSecundariaTexto">#1e293b</span>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label>🖼️ Ícone (Emoji)</label>
+                    <input type="text" id="icone" placeholder="⚖️" value="⚖️" maxlength="2">
+                </div>
+
+                <div class="preview">
+                    <div class="preview-icon" id="previewIcon" style="background: #3b82f6;">⚖️</div>
+                    <p id="previewNome">SK Editor</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURAÇÕES AVANÇADAS -->
+        <div class="secao">
+            <h2>⚡ Configurações Avançadas</h2>
+
+            <div class="grid">
+                <div class="campo">
+                    <label>📱 Orientação</label>
+                    <select id="orientacao">
+                        <option value="portrait">Retrato (Vertical)</option>
+                        <option value="landscape">Paisagem (Horizontal)</option>
+                        <option value="both">Ambas</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label>🔧 Android API Mínima</label>
+                    <select id="apiMinima">
+                        <option value="21">API 21 (Android 5.0)</option>
+                        <option value="24">API 24 (Android 7.0)</option>
+                        <option value="26">API 26 (Android 8.0)</option>
+                        <option value="29">API 29 (Android 10)</option>
+                        <option value="31">API 31 (Android 12)</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label>🔧 Android API Alvo</label>
+                    <select id="apiAlvo">
+                        <option value="31">API 31 (Android 12)</option>
+                        <option value="32">API 32 (Android 12.1)</option>
+                        <option value="33">API 33 (Android 13)</option>
+                        <option value="34">API 34 (Android 14)</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label>🔐 Assinatura</label>
+                    <select id="assinatura">
+                        <option value="debug">Debug (Teste)</option>
+                        <option value="release">Release (Produção)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="campo">
+                <label>✅ Permissões</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="internet" checked>
+                        <label for="internet" style="margin: 0;">Internet</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="camera">
+                        <label for="camera" style="margin: 0;">Câmera</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="microfone">
+                        <label for="microfone" style="margin: 0;">Microfone</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="armazenamento">
+                        <label for="armazenamento" style="margin: 0;">Armazenamento</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESUMO -->
+        <div class="resumo-config">
+            <strong>📋 Resumo da Configuração:</strong>
+            <p><strong>Nome:</strong> <span id="resumoNome">SK Editor</span></p>
+            <p><strong>ID:</strong> <span id="resumoId">com.skeditor.app</span></p>
+            <p><strong>Versão:</strong> <span id="resumoVersao">1</span></p>
+            <p><strong>Orientação:</strong> <span id="resumoOrientacao">Retrato</span></p>
+            <p><strong>API:</strong> <span id="resumoApi">21 → 34</span></p>
+        </div>
+
+        <!-- BOTÕES -->
+        <div class="botoes">
+            <button onclick="salvarConfig()">💾 Salvar Configuração</button>
+            <button onclick="gerarManifest()">📄 Gerar Manifest</button>
+            <button onclick="resetarConfig()">🔄 Resetar</button>
+        </div>
+    </div>
+
+    <script>
+        // ── ATUALIZAR PREVIEW ──
+        document.getElementById('nomeApp').addEventListener('input', (e) => {
+            document.getElementById('previewNome').textContent = e.target.value;
+            document.getElementById('resumoNome').textContent = e.target.value;
+        });
+
+        document.getElementById('icone').addEventListener('input', (e) => {
+            document.getElementById('previewIcon').textContent = e.target.value;
+        });
+
+        document.getElementById('corPrimaria').addEventListener('input', (e) => {
+            document.getElementById('previewIcon').style.background = e.target.value;
+            document.getElementById('corPrimariaTexto').textContent = e.target.value;
+        });
+
+        document.getElementById('corSecundaria').addEventListener('input', (e) => {
+            document.getElementById('corSecundariaTexto').textContent = e.target.value;
+        });
+
+        document.getElementById('idApp').addEventListener('input', (e) => {
+            document.getElementById('resumoId').textContent = e.target.value;
+        });
+
+        document.getElementById('versao').addEventListener('input', (e) => {
+            document.getElementById('resumoVersao').textContent = e.target.value;
+        });
+
+        document.getElementById('orientacao').addEventListener('change', (e) => {
+            const textos = {
+                'portrait': 'Retrato',
+                'landscape': 'Paisagem',
+                'both': 'Ambas'
+            };
+            document.getElementById('resumoOrientacao').textContent = textos[e.target.value];
+        });
+
+        // ── SALVAR CONFIGURAÇÃO ──
+        function salvarConfig() {
+            const config = {
+                nomeApp: document.getElementById('nomeApp').value,
+                idApp: document.getElementById('idApp').value,
+                versao: document.getElementById('versao').value,
+                descricao: document.getElementById('descricao').value,
+                corPrimaria: document.getElementById('corPrimaria').value,
+                corSecundaria: document.getElementById('corSecundaria').value,
+                icone: document.getElementById('icone').value,
+                orientacao: document.getElementById('orientacao').value,
+                apiMinima: document.getElementById('apiMinima').value,
+                apiAlvo: document.getElementById('apiAlvo').value,
+                assinatura: document.getElementById('assinatura').value
+            };
+
+            localStorage.setItem('apkConfig', JSON.stringify(config));
+            alert('✅ Configuração salva com sucesso!');
+        }
+
+        // ── GERAR MANIFEST ──
+        function gerarManifest() {
+            const config = {
+                nomeApp: document.getElementById('nomeApp').value,
+                idApp: document.getElementById('idApp').value,
+                versao: document.getElementById('versao').value
+            };
+
+            const manifest = `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="${config.idApp}"
+    android:versionCode="${config.versao}"
+    android:versionName="${config.versao}.0">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application
+        android:label="${config.nomeApp}"
+        android:icon="@mipmap/ic_launcher">
+
+        <activity android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>`;
+
+            const blob = new Blob([manifest], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'AndroidManifest.xml';
+            a.click();
+
+            alert('✅ AndroidManifest.xml gerado!');
+        }
+
+        // ── RESETAR ──
+        function resetarConfig() {
+            if (confirm('Tem certeza que deseja resetar todas as configurações?')) {
+                document.getElementById('nomeApp').value = 'SK Editor';
+                document.getElementById('idApp').value = 'com.skeditor.app';
+                document.getElementById('versao').value = '1';
+                document.getElementById('descricao').value = 'App jurídico interativo';
+                document.getElementById('corPrimaria').value = '#3b82f6';
+                document.getElementById('corSecundaria').value = '#1e293b';
+                document.getElementById('icone').value = '⚖️';
+                document.getElementById('orientacao').value = 'portrait';
+                document.getElementById('apiMinima').value = '21';
+                document.getElementById('apiAlvo').value = '34';
+                document.getElementById('assinatura').value = 'debug';
+                alert('✅ Configurações resetadas!');
+            }
+        }
+
+        // Carregar configuração salva
+        window.addEventListener('load', () => {
+            const config = localStorage.getItem('apkConfig');
+            if (config) {
+                const dados = JSON.parse(config);
+                Object.keys(dados).forEach(chave => {
+                    const elemento = document.getElementById(chave);
+                    if (elemento) {
+                        elemento.value = dados[chave];
+                        elemento.dispatchEvent(new Event('input'));
+                        elemento.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iara Suite PRO - Guia de Setup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0d1117;
+      color: #e6edf3;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      color: #58a6ff;
+      margin-bottom: 20px;
+      font-size: 28px;
+      border-bottom: 2px solid #30363d;
+      padding-bottom: 10px;
+    }
+
+    h3 {
+      color: #79c0ff;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .step {
+      background: #0d1117;
+      border-left: 4px solid #58a6ff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+    }
+
+    .step-number {
+      display: inline-block;
+      background: #58a6ff;
+      color: #0d1117;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    .command {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .command::before {
+      content: '$ ';
+      color: #58a6ff;
+      font-weight: bold;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #58a6ff;
+      color: #0d1117;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+      transition: 0.3s;
+    }
+
+    .copy-btn:hover {
+      background: #79c0ff;
+    }
+
+    .folder-tree {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      padding: 20px;
+      border-radius: 6px;
+      margin: 15px 0;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .folder-tree code {
+      color: #79c0ff;
+    }
+
+    .file-list {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      padding: 20px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+
+    .file-item {
+      padding: 10px;
+      margin: 5px 0;
+      background: #161b22;
+      border-left: 3px solid #58a6ff;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .file-item .name {
+      color: #58a6ff;
+      font-weight: bold;
+    }
+
+    .file-item .desc {
+      color: #8b949e;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .warning {
+      background: rgba(248, 81, 73, 0.1);
+      border-left: 4px solid #f85149;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+
+    .warning::before {
+      content: '⚠️ ';
+      font-weight: bold;
+    }
+
+    .success {
+      background: rgba(63, 185, 80, 0.1);
+      border-left: 4px solid #3fb950;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+
+    .success::before {
+      content: '✅ ';
+      font-weight: bold;
+    }
+
+    .info {
+      background: rgba(88, 166, 255, 0.1);
+      border-left: 4px solid #58a6ff;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+
+    .info::before {
+      content: 'ℹ️ ';
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+    }
+
+    th {
+      background: #0d1117;
+      color: #58a6ff;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #0d1117;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #58a6ff;
+    }
+
+    .card-title {
+      color: #58a6ff;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      color: #8b949e;
+      font-size: 12px;
+    }
+
+    .highlight {
+      background: rgba(88, 166, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #79c0ff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #8b949e;
+      border-top: 1px solid #30363d;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 32px;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <h1>⚡ Iara Suite PRO</h1>
+    <p class="subtitle">Guia Completo de Setup e Estrutura</p>
+  </header>
+
+  <!-- SEÇÃO 1: ESTRUTURA DE PASTAS -->
+  <section>
+    <h2>📁 Estrutura de Pastas</h2>
+    
+    <h3>Crie exatamente estas pastas:</h3>
+    
+    <div class="folder-tree">
+      <code>
+iara-pro/<br>
+├── core/<br>
+├── styles/<br>
+├── modules/<br>
+│   ├── sidebar/<br>
+│   ├── editor/<br>
+│   ├── preview/<br>
+│   ├── ai/<br>
+│   ├── mapper/<br>
+│   ├── context-menu/<br>
+│   ├── tabs/<br>
+│   ├── guide/<br>
+│   └── export/<br>
+└── index.html
+      </code>
+    </div>
+
+    <h3>Comando para criar (Linux/Mac):</h3>
+    <div class="command">mkdir -p iara-pro/{core,styles,modules/{sidebar,editor,preview,ai,mapper,context-menu,tabs,guide,export}}</div>
+
+    <h3>Comando para criar (Windows PowerShell):</h3>
+    <div class="command">New-Item -ItemType Directory -Path iara-pro -Force; cd iara-pro; mkdir core,styles; mkdir modules; cd modules; mkdir sidebar,editor,preview,ai,mapper,context-menu,tabs,guide,export</div>
+
+    <div class="success">
+      Após criar as pastas, você terá a estrutura pronta para adicionar os arquivos!
+    </div>
+  </section>
+
+  <!-- SEÇÃO 2: NOMES DOS ARQUIVOS -->
+  <section>
+    <h2>📄 Nomes Exatos dos Arquivos</h2>
+    
+    <h3>Pasta: <span class="highlight">core/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">app.js</div>
+        <div class="desc">Inicialização da aplicação</div>
+      </div>
+      <div class="file-item">
+        <div class="name">state.js</div>
+        <div class="desc">Estado global</div>
+      </div>
+      <div class="file-item">
+        <div class="name">storage.js</div>
+        <div class="desc">Persistência de dados</div>
+      </div>
+      <div class="file-item">
+        <div class="name">utils.js</div>
+        <div class="desc">Funções auxiliares</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">styles/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">theme.css</div>
+        <div class="desc">Tema e componentes</div>
+      </div>
+      <div class="file-item">
+        <div class="name">responsive.css</div>
+        <div class="desc">Design responsivo</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/sidebar/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">sidebar.js</div>
+        <div class="desc">Árvore de arquivos</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/editor/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">editor.js</div>
+        <div class="desc">Editor de código</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/preview/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">preview.js</div>
+        <div class="desc">Preview ao vivo</div>
+      </div>
+      <div class="file-item">
+        <div class="name">preview-drag.js</div>
+        <div class="desc">Redimensionamento</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/ai/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">ai-detect.js</div>
+        <div class="desc">Detecção de chaves</div>
+      </div>
+      <div class="file-item">
+        <div class="name">ai-providers.js</div>
+        <div class="desc">Provedores de IA</div>
+      </div>
+      <div class="file-item">
+        <div class="name">ai.js</div>
+        <div class="desc">Chat e integração</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/mapper/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">mapper-analyze.js</div>
+        <div class="desc">Análise de código</div>
+      </div>
+      <div class="file-item">
+        <div class="name">mapper-deps.js</div>
+        <div class="desc">Dependências</div>
+      </div>
+      <div class="file-item">
+        <div class="name">mapper-bugs.js</div>
+        <div class="desc">Detecção de bugs</div>
+      </div>
+      <div class="file-item">
+        <div class="name">mapper-git.js</div>
+        <div class="desc">Integração Git</div>
+      </div>
+      <div class="file-item">
+        <div class="name">mapper-bate.js</div>
+        <div class="desc">Geração de scripts</div>
+      </div>
+      <div class="file-item">
+        <div class="name">mapper-report.js</div>
+        <div class="desc">Relatórios</div>
+      </div>
+      <div class="file-item">
+        <div class="name">mapper.js</div>
+        <div class="desc">Orquestrador mapper</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/context-menu/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">context.js</div>
+        <div class="desc">Menu de contexto</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/tabs/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">tabs.js</div>
+        <div class="desc">Sistema de abas</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/guide/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">guide.js</div>
+        <div class="desc">Guia interativo</div>
+      </div>
+    </div>
+
+    <h3>Pasta: <span class="highlight">modules/export/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">export.js</div>
+        <div class="desc">Exportação</div>
+      </div>
+    </div>
+
+    <h3>Raiz: <span class="highlight">iara-pro/</span></h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">index.html</div>
+        <div class="desc">Arquivo principal</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 3: ORDEM DE CARREGAMENTO -->
+  <section>
+    <h2>⚙️ Ordem de Carregamento (IMPORTANTE!)</h2>
+    
+    <div class="warning">
+      A ordem dos scripts no index.html é CRÍTICA! Siga exatamente esta sequência.
+    </div>
+
+    <h3>Ordem correta:</h3>
+    <div class="file-list">
+      <div class="file-item">
+        <div class="name">1º</div>
+        <div class="desc">core/utils.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">2º</div>
+        <div class="desc">core/state.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">3º</div>
+        <div class="desc">core/storage.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">4º</div>
+        <div class="desc">modules/sidebar/sidebar.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">5º</div>
+        <div class="desc">modules/editor/editor.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">6º</div>
+        <div class="desc">modules/preview/preview.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">7º</div>
+        <div class="desc">modules/preview/preview-drag.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">8º</div>
+        <div class="desc">modules/ai/ai-detect.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">9º</div>
+        <div class="desc">modules/ai/ai-providers.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">10º</div>
+        <div class="desc">modules/ai/ai.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">11º</div>
+        <div class="desc">modules/mapper/mapper-analyze.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">12º</div>
+        <div class="desc">modules/mapper/mapper-deps.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">13º</div>
+        <div class="desc">modules/mapper/mapper-bugs.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">14º</div>
+        <div class="desc">modules/mapper/mapper-git.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">15º</div>
+        <div class="desc">modules/mapper/mapper-bate.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">16º</div>
+        <div class="desc">modules/mapper/mapper-report.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">17º</div>
+        <div class="desc">modules/mapper/mapper.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">18º</div>
+        <div class="desc">modules/context-menu/context.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">19º</div>
+        <div class="desc">modules/tabs/tabs.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">20º</div>
+        <div class="desc">modules/guide/guide.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">21º</div>
+        <div class="desc">modules/export/export.js</div>
+      </div>
+      <div class="file-item">
+        <div class="name">22º</div>
+        <div class="desc">core/app.js</div>
+      </div>
+    </div>
+
+    <div class="success">
+      Respeite esta ordem! Se não funcionar, a ordem está errada.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 4: COMANDOS PARA COPIAR -->
+  <section>
+    <h2>📋 Comandos para Copiar</h2>
+    
+    <h3>1. Criar pasta (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">mkdir -p iara-pro/{core,styles,modules/{sidebar,editor,preview,ai,mapper,context-menu,tabs,guide,export}}</div>
+
+    <h3>2. Entrar na pasta:</h3>
+    <div class="command" onclick="copiar(this)">cd iara-pro</div>
+
+    <h3>3. Criar arquivos core (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch core/app.js core/state.js core/storage.js core/utils.js</div>
+
+    <h3>4. Criar arquivos styles (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch styles/theme.css styles/responsive.css</div>
+
+    <h3>5. Criar arquivos modules (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch modules/sidebar/sidebar.js modules/editor/editor.js modules/preview/preview.js modules/preview/preview-drag.js</div>
+
+    <h3>6. Criar mais modules (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch modules/ai/ai-detect.js modules/ai/ai-providers.js modules/ai/ai.js</div>
+
+    <h3>7. Criar mapper modules (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch modules/mapper/mapper-analyze.js modules/mapper/mapper-deps.js modules/mapper/mapper-bugs.js modules/mapper/mapper-git.js modules/mapper/mapper-bate.js modules/mapper/mapper-report.js modules/mapper/mapper.js</div>
+
+    <h3>8. Criar últimos modules (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch modules/context-menu/context.js modules/tabs/tabs.js modules/guide/guide.js modules/export/export.js</div>
+
+    <h3>9. Criar index.html (Linux/Mac):</h3>
+    <div class="command" onclick="copiar(this)">touch index.html</div>
+
+    <h3>10. Listar tudo (verificar):</h3>
+    <div class="command" onclick="copiar(this)">find . -type f -name "*.js" -o -name "*.css" -o -name "*.html" | sort</div>
+
+    <h3>11. Iniciar servidor (Python 3):</h3>
+    <div class="command" onclick="copiar(this)">python -m http.server 8000</div>
+
+    <h3>12. Iniciar servidor (Node.js):</h3>
+    <div class="command" onclick="copiar(this)">npx http-server</div>
+
+    <h3>13. Iniciar servidor (PHP):</h3>
+    <div class="command" onclick="copiar(this)">php -S localhost:8000</div>
+
+    <div class="info">
+      Clique em qualquer comando para copiar para a área de transferência!
+    </div>
+  </section>
+
+  <!-- SEÇÃO 5: CHECKLIST -->
+  <section>
+    <h2>✅ Checklist de Setup</h2>
+    
+    <table>
+      <tr>
+        <th>Passo</th>
+        <th>Ação</th>
+        <th>Status</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>Criar pasta <code>iara-pro</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Criar pasta <code>core</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Criar pasta <code>styles</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Criar pasta <code>modules</code> e subpastas</td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Criar 4 arquivos em <code>core/</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Criar 2 arquivos em <code>styles/</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Criar 22 arquivos em <code>modules/</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>Criar <code>index.html</code></td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Copiar código para cada arquivo</td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>Verificar ordem dos scripts</td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td>Abrir no navegador</td>
+        <td>[ ] ✅</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td>Testar funcionalidades</td>
+        <td>[ ] ✅</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- SEÇÃO 6: DIAGRAMA VISUAL -->
+  <section>
+    <h2>🎨 Diagrama Visual do Projeto</h2>
+    
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">📁 CORE</div>
+        <div class="card-desc">
+          Núcleo da aplicação<br>
+          • app.js<br>
+          • state.js<br>
+          • storage.js<br>
+          • utils.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎨 STYLES</div>
+        <div class="card-desc">
+          Estilos CSS<br>
+          • theme.css<br>
+          • responsive.css
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📝 SIDEBAR</div>
+        <div class="card-desc">
+          Árvore de arquivos<br>
+          • sidebar.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💻 EDITOR</div>
+        <div class="card-desc">
+          Editor de código<br>
+          • editor.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👁️ PREVIEW</div>
+        <div class="card-desc">
+          Preview ao vivo<br>
+          • preview.js<br>
+          • preview-drag.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🤖 AI</div>
+        <div class="card-desc">
+          IA integrada<br>
+          • ai-detect.js<br>
+          • ai-providers.js<br>
+          • ai.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🗺️ MAPPER</div>
+        <div class="card-desc">
+          Análise de projetos<br>
+          • 7 arquivos
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⋮ CONTEXT</div>
+        <div class="card-desc">
+          Menu de contexto<br>
+          • context.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📑 TABS</div>
+        <div class="card-desc">
+          Sistema de abas<br>
+          • tabs.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📚 GUIDE</div>
+        <div class="card-desc">
+          Guia interativo<br>
+          • guide.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📤 EXPORT</div>
+        <div class="card-desc">
+          Exportação<br>
+          • export.js
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📄 INDEX</div>
+        <div class="card-desc">
+          Arquivo principal<br>
+          • index.html
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 7: RESUMO -->
+  <section>
+    <h2>📊 Resumo do Projeto</h2>
+    
+    <table>
+      <tr>
+        <th>Métrica</th>
+        <th>Valor</th>
+      </tr>
+      <tr>
+        <td>Total de Pastas</td>
+        <td>10</td>
+      </tr>
+      <tr>
+        <td>Total de Arquivos</td>
+        <td>29</td>
+      </tr>
+      <tr>
+        <td>Arquivos JavaScript</td>
+        <td>26</td>
+      </tr>
+      <tr>
+        <td>Arquivos CSS</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Arquivos HTML</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>Linhas de Código</td>
+        <td>~5000+</td>
+      </tr>
+      <tr>
+        <td>Funcionalidades</td>
+        <td>15+</td>
+      </tr>
+      <tr>
+        <td>Módulos</td>
+        <td>9</td>
+      </tr>
+    </table>
+  </section>
+
+  <footer>
+    <p>Iara Suite PRO v2.0.0 | Dr. Maikon Caldeira OAB/MG 183712</p>
+    <p>Última atualização: 2026-09-15</p>
+  </footer>
+
+</div>
+
+<script>
+  function copiar(element) {
+    const text = element.textContent.replace('$ ', '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const original = element.textContent;
+      element.textContent = '✅ Copiado!';
+      element.style.background = '#3fb950';
+      setTimeout(() => {
+        element.textContent = original;
+        element.style.background = '';
+      }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>

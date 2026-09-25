@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Iara Mapper Real — Dr. Maikon Caldeira</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+    .container { display: flex; flex-direction: column; height: 100vh; }
+    .header { background: #1e293b; border-bottom: 1px solid #334155; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .header-title { font-size: 14px; font-weight: 600; color: #58a6ff; }
+    .header-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { padding: 8px 14px; background: #6366f1; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; }
+    .btn:hover:not(:disabled) { background: #4f46e5; }
+    .btn:disabled { background: #475569; cursor: not-allowed; opacity: 0.5; }
+    .btn.secondary { background: #475569; }
+    .btn.danger { background: #ff6b6b; }
+    .btn.success { background: #3fb950; }
+    .header-status { margin-left: auto; font-size: 11px; color: #94a3b8; }
+    .file-input-wrapper { position: relative; overflow: hidden; }
+    .file-input-wrapper input[type="file"] { position: absolute; left: -9999px; }
+    .content { flex: 1; display: flex; gap: 0; overflow: hidden; }
+    .sidebar { width: 300px; background: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; overflow: hidden; transition: width 0.3s; }
+    .sidebar.collapsed { width: 0; border-right: none; }
+    .sidebar-header { padding: 12px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-header h3 { font-size: 12px; color: #58a6ff; }
+    .sidebar-toggle { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; }
+    .sidebar-search { padding: 8px; border-bottom: 1px solid #334155; }
+    .sidebar-search input { width: 100%; padding: 6px 8px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; font-size: 11px; }
+    .sidebar-search input:focus { outline: none; border-color: #58a6ff; }
+    .files-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .file-item { padding: 8px; margin-bottom: 6px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 11px; }
+    .file-item:hover { background: #1e293b; border-color: #58a6ff; }
+    .file-item.active { background: #1e293b; border-color: #3fb950; box-shadow: 0 0 8px rgba(63, 185, 80, 0.3); }
+    .file-item-name { color: #58a6ff; font-weight: 600; margin-bottom: 2px; }
+    .file-item-info { color: #94a3b8; font-size: 10px; }
+    .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .editor-preview { flex: 1; display: flex; gap: 0; overflow: hidden; }
+    .editor-panel { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow: hidden; }
+    .panel-header { padding: 8px 12px; background: #0f172a; border-bottom: 1px solid #334155; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; }
+    .panel-header-title { font-weight: 600; color: #58a6ff; }
+    .editor-wrapper { flex: 1; display: flex; overflow: hidden; }
+    .line-numbers { background: #0f172a; color: #475569; padding: 8px 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.5; border-right: 1px solid #334155; overflow: hidden; user-select: none; text-align: right; }
+    .code-editor { flex: 1; padding: 8px 12px; background: #0f172a; color: #e2e8f0; border: none; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.5; resize: none; outline: none; overflow: auto; white-space: pre; }
+    .preview-panel { flex: 1; display: flex; flex-direction: column; border-left: 1px solid #334155; overflow: hidden; }
+    .preview-content { flex: 1; overflow: auto; background: #0f172a; padding: 12px; }
+    .preview-code { background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.5; color: #e2e8f0; overflow: auto; white-space: pre-wrap; word-wrap: break-word; }
+    .highlight-old { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; text-decoration: line-through; }
+    .highlight-new { background: rgba(63, 185, 80, 0.2); color: #3fb950; font-weight: 600; }
+    .bottom-panel { height: 200px; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; overflow: hidden; }
+    .bottom-header { padding: 8px 12px; background: #0f172a; border-bottom: 1px solid #334155; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; }
+    .bottom-header-title { font-weight: 600; color: #58a6ff; }
+    .bottom-content { flex: 1; overflow-y: auto; padding: 8px 12px; font-size: 11px; font-family: monospace; line-height: 1.5; }
+    .info-item { margin-bottom: 8px; padding: 6px; background: #0f172a; border-left: 3px solid #58a6ff; border-radius: 2px; }
+    .info-label { color: #94a3b8; font-size: 10px; }
+    .info-value { color: #3fb950; font-weight: 600; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 10000; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-content { background: #1e293b; padding: 20px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid #334155; }
+    .modal-title { font-size: 14px; font-weight: 600; color: #58a6ff; margin-bottom: 12px; }
+    .modal-text { font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px; }
+    .modal-input { width: 100%; padding: 8px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; font-size: 11px; margin-bottom: 12px; font-family: monospace; }
+    .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 16px; background: #3fb950; color: #fff; border-radius: 8px; font-size: 11px; font-weight: 600; z-index: 9999; animation: slideIn 0.3s ease-out; max-width: 300px; }
+    .toast.err { background: #ff6b6b; }
+    .toast.warn { background: #ffc107; color: #000; }
+    @keyframes slideIn { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @media (max-width: 768px) { .content { flex-direction: column; } .sidebar { width: 100%; height: 150px; border-right: none; border-bottom: 1px solid #334155; } .editor-preview { flex-direction: column; } .editor-panel { border-right: none; border-bottom: 1px solid #334155; } .preview-panel { border-left: none; } .bottom-panel { height: 150px; } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-title">🔍 Iara Mapper Real</div>
+    <div class="header-buttons">
+      <div class="file-input-wrapper">
+        <button class="btn">📁 Importar</button>
+        <input type="file" id="file-input" accept="*" multiple>
+      </div>
+      <button class="btn secondary" id="btn-buscar">🔍 Buscar</button>
+      <button class="btn secondary" id="btn-substituir">🔄 Substituir</button>
+      <button class="btn danger" id="btn-clear">🗑️ Limpar</button>
+      <button class="btn success" id="btn-export">💾 Exportar</button>
+    </div>
+    <div class="header-status">
+      <span id="status-text">Pronto</span>
+    </div>
+  </div>
+  
+  <div class="content">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>📂 Arquivos</h3>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">✕</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" id="search-files" placeholder="🔍 Buscar...">
+      </div>
+      <div class="files-list" id="files-list">
+        <div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 20px;">📁 Importe um arquivo</div>
+      </div>
+    </div>
+    
+    <div class="main-area">
+      <div class="editor-preview">
+        <div class="editor-panel">
+          <div class="panel-header">
+            <span class="panel-header-title" id="editor-title">📄 Editor</span>
+            <span id="editor-info" style="font-size: 10px; color: #94a3b8;"></span>
+          </div>
+          <div class="editor-wrapper">
+            <div class="line-numbers" id="line-numbers"></div>
+            <textarea class="code-editor" id="code-editor" placeholder="Importe um arquivo..." readonly></textarea>
+          </div>
+        </div>
+        
+        <div class="preview-panel">
+          <div class="panel-header">
+            <span class="panel-header-title">👁️ Preview</span>
+          </div>
+          <div class="preview-content" id="preview-content">
+            <div style="color: #94a3b8; font-size: 12px; text-align: center; padding: 20px;">👀 Selecione um arquivo</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bottom-panel">
+        <div class="bottom-header">
+          <span class="bottom-header-title">ℹ️ Informações</span>
+          <button class="sidebar-toggle" onclick="toggleBottom()">−</button>
+        </div>
+        <div class="bottom-content" id="bottom-content">
+          <div class="info-item">
+            <div class="info-label">Status:</div>
+            <div class="info-value">Aguardando arquivo...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-buscar">
+  <div class="modal-content">
+    <div class="modal-title">🔍 Buscar no Arquivo</div>
+    <input type="text" id="input-buscar" class="modal-input" placeholder="Digite o texto para buscar...">
+    <div id="resultados-busca" style="background: #0f172a; padding: 12px; border-radius: 4px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; font-size: 11px; color: #94a3b8;"></div>
+    <div class="modal-buttons">
+      <button class="btn secondary" onclick="closeModal('modal-buscar')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-substituir">
+  <div class="modal-content">
+    <div class="modal-title">🔄 Buscar e Substituir</div>
+    <input type="text" id="input-buscar-sub" class="modal-input" placeholder="Buscar...">
+    <input type="text" id="input-substituir" class="modal-input" placeholder="Substituir por...">
+    <div id="preview-substituicao" style="background: #0f172a; padding: 12px; border-radius: 4px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; font-size: 11px; font-family: monospace; color: #e2e8f0;"></div>
+    <div class="modal-buttons">
+      <button class="btn secondary" onclick="closeModal('modal-substituir')">Cancelar</button>
+      <button class="btn success" onclick="confirmarSubstituicao()">✅ Substituir Tudo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const qs = s => document.querySelector(s);
+  const qsa = s => [...document.querySelectorAll(s)];
+  
+  let files = [];
+  let currentFile = null;
+  let searchTerm = '';
+  let replaceTerm = '';
+  
+  function toast(msg, type = 'ok') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+  
+  function getExt(name) {
+    return (name.split('.').pop() || '').toLowerCase();
+  }
+  
+  function updateLineNums() {
+    const ta = qs('#code-editor');
+    const ln = qs('#line-numbers');
+    const lines = ta.value.split('\n').length;
+    ln.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('\n');
+  }
+  
+  function syncScroll() {
+    const ta = qs('#code-editor');
+    const ln = qs('#line-numbers');
+    ln.scrollTop = ta.scrollTop;
+  }
+  
+  async function handleFileUpload(e) {
+    const fileList = e.target.files;
+    if (!fileList.length) return;
+    
+    qs('#status-text').textContent = '📥 Processando...';
+    
+    try {
+      for (let file of fileList) {
+        const content = await file.text();
+        files.push({
+          name: file.name,
+          content: content,
+          ext: getExt(file.name),
+          size: file.size,
+          modified: false
+        });
+      }
+      renderFilesList();
+      toast('✅ Arquivo(s) carregado(s)!');
+    } catch (err) {
+      toast('❌ Erro: ' + err.message, 'err');
+    }
+    
+    qs('#status-text').textContent = 'Pronto';
+    qs('#file-input').value = '';
+  }
+  
+  function renderFilesList() {
+    const query = qs('#search-files').value.toLowerCase();
+    const filtered = files.filter(f => f.name.toLowerCase().includes(query));
+    
+    const html = filtered.map((f, i) => `
+      <div class="file-item ${currentFile === i ? 'active' : ''}" onclick="selectFile(${i})">
+        <div class="file-item-name">
+          ${f.modified ? '✏️' : '📄'} ${f.name.split('/').pop()}
+        </div>
+        <div class="file-item-info">
+          ${f.ext.toUpperCase()} · ${(f.size / 1024).toFixed(1)}KB
+        </div>
+      </div>
+    `).join('');
+    
+    qs('#files-list').innerHTML = html || '<div style="color: #94a3b8; font-size: 11px; padding: 20px;">Nenhum arquivo</div>';
+  }
+  
+  function selectFile(i) {
+    currentFile = i;
+    const file = files[i];
+    
+    qs('#code-editor').value = file.content;
+    qs('#editor-title').textContent = `${file.modified ? '✏️' : '📄'} ${file.name}`;
+    qs('#editor-info').textContent = file.ext.toUpperCase();
+    
+    updateLineNums();
+    updateInfo(file);
+    updatePreview(file);
+    renderFilesList();
+  }
+  
+  function updateInfo(file) {
+    const lines = file.content.split('\n').length;
+    const chars = file.content.length;
+    
+    qs('#bottom-content').innerHTML = `
+      <div class="info-item">
+        <div class="info-label">Arquivo:</div>
+        <div class="info-value">${file.name}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Linhas:</div>
+        <div class="info-value">${lines}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Caracteres:</div>
+        <div class="info-value">${chars}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Tamanho:</div>
+        <div class="info-value">${(file.size / 1024).toFixed(2)}KB</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Status:</div>
+        <div class="info-value">${file.modified ? '✏️ Modificado' : '✅ Original'}</div>
+      </div>
+    `;
+  }
+  
+  function updatePreview(file) {
+    qs('#preview-content').innerHTML = `<div class="preview-code">${escapeHtml(file.content)}</div>`;
+  }
+  
+  function escapeHtml(text) {
+    const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+  
+  function buscarTexto() {
+    if (currentFile === null) {
+      toast('❌ Selecione um arquivo', 'err');
+      return;
+    }
+    
+    qs('#modal-buscar').classList.add('open');
+    
+    qs('#input-buscar').addEventListener('input', (e) => {
+      const termo = e.target.value;
+      if (!termo) {
+        qs('#resultados-busca').innerHTML = '<span style="color: #94a3b8;">Digite algo para buscar...</span>';
+        return;
+      }
+      
+      const file = files[currentFile];
+      const regex = new RegExp(termo, 'gi');
+      const matches = [...file.content.matchAll(regex)];
+      
+      if (matches.length === 0) {
+        qs('#resultados-busca').innerHTML = '<span style="color: #ff6b6b;">❌ Nenhum resultado encontrado</span>';
+        return;
+      }
+      
+      const html = matches.map((m, i) => {
+        const start = Math.max(0, m.index - 30);
+        const end = Math.min(file.content.length, m.index + m[0].length + 30);
+        const context = file.content.slice(start, end);
+        
+        return `
+          <div style="margin-bottom: 8px; padding: 8px; background: #1e293b; border-radius: 4px;">
+            <div style="color: #3fb950; font-weight: 600; margin-bottom: 4px;">Resultado ${i + 1}</div>
+            <div style="color: #94a3b8;">...${escapeHtml(context)}...</div>
+          </div>
+        `;
+      }).join('');
+      
+      qs('#resultados-busca').innerHTML = `<div style="color: #3fb950; margin-bottom: 8px;">✅ ${matches.length} resultado(s) encontrado(s)</div>${html}`;
+    });
+  }
+  
+  function substituirTexto() {
+    if (currentFile === null) {
+      toast('❌ Selecione um arquivo', 'err');
+      return;
+    }
+    
+    qs('#modal-substituir').classList.add('open');
+    
+    const updatePreview = () => {
+      const buscar = qs('#input-buscar-sub').value;
+      const substituir = qs('#input-substituir').value;
+      
+      if (!buscar) {
+        qs('#preview-substituicao').innerHTML = '<span style="color: #94a3b8;">Digite o texto para buscar...</span>';
+        return;
+      }
+      
+      const file = files[currentFile];
+      const regex = new RegExp(buscar, 'gi');
+      const matches = [...file.content.matchAll(regex)];
+      
+      if (matches.length === 0) {
+        qs('#preview-substituicao').innerHTML = '<span style="color: #ff6b6b;">❌ Nenhuma ocorrência encontrada</span>';
+        return;
+      }
+      
+      const preview = file.content.replace(regex, `<span class="highlight-new">${substituir}</span>`);
+      const html = preview.slice(0, 500) + (preview.length > 500 ? '...' : '');
+      
+      qs('#preview-substituicao').innerHTML = `
+        <div style="color: #3fb950; margin-bottom: 8px;">✅ ${matches.length} mudança(s) será(ão) feita(s)</div>
+        <div>${escapeHtml(html)}</div>
+      `;
+      
+      searchTerm = buscar;
+      replaceTerm = substituir;
+    };
+    
+    qs('#input-buscar-sub').addEventListener('input', updatePreview);
+    qs('#input-substituir').addEventListener('input', updatePreview);
+  }
+  
+  function confirmarSubstituicao() {
+    if (!searchTerm || currentFile === null) {
+      toast('❌ Erro na substituição', 'err');
+      return;
+    }
+    
+    const file = files[currentFile];
+    const regex = new RegExp(searchTerm, 'gi');
+    const novoConteudo = file.content.replace(regex, replaceTerm);
+    
+    if (novoConteudo === file.content) {
+      toast('❌ Nenhuma mudança foi feita', 'warn');
+      return;
+    }
+    
+    file.content = novoConteudo;
+    file.modified = true;
+    
+    selectFile(currentFile);
+    closeModal('modal-substituir');
+    toast(`✅ ${searchTerm.length} ocorrência(s) substituída(s)!`);
+  }
+  
+  function toggleSidebar() {
+    qs('#sidebar').classList.toggle('collapsed');
+  }
+  
+  function toggleBottom() {
+    const bp = qs('.bottom-panel');
+    bp.style.display = bp.style.display === 'none' ? 'flex' : 'none';
+  }
+  
+  function clearAll() {
+    if (confirm('🗑️ Limpar todos os arquivos?')) {
+      files = [];
+      currentFile = null;
+      qs('#code-editor').value = '';
+      qs('#files-list').innerHTML = '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 20px;">📁 Importe um arquivo</div>';
+      toast('🗑️ Tudo limpo!');
+    }
+  }
+  
+  function exportFile() {
+    if (currentFile === null) {
+      toast('❌ Selecione um arquivo', 'err');
+      return;
+    }
+    
+    const file = files[currentFile];
+    const blob = new Blob([file.content], {type: 'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = file.name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('✅ Exportado!');
+  }
+  
+  function closeModal(id) {
+    qs('#' + id).classList.remove('open');
+  }
+  
+  qs('#file-input').addEventListener('change', handleFileUpload);
+  qs('#search-files').addEventListener('input', () => renderFilesList());
+  qs('#btn-buscar').addEventListener('click', buscarTexto);
+  qs('#btn-substituir').addEventListener('click', substituirTexto);
+  qs('#btn-clear').addEventListener('click', clearAll);
+  qs('#btn-export').addEventListener('click', exportFile);
+  qs('#code-editor').addEventListener('scroll', syncScroll);
+</script>
+
+</body>
+</html>
